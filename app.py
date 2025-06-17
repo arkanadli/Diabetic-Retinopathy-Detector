@@ -2,16 +2,15 @@ import streamlit as st
 import cv2
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import Model # Import Model specifically
+from tensorflow.keras.models import load_model, Model # Keep load_model
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, BatchNormalization, Dropout, Input
-from tensorflow.keras.applications import EfficientNetB0 # Import the base model
+from tensorflow.keras.applications import EfficientNetB0 # Keep if needed for reconstruction fallback
 import matplotlib.pyplot as plt
 from PIL import Image
 import io
 import os
 
 # Define your custom metrics if they are not built-in Keras metrics
-# Ensure these are the exact classes used when the model was trained
 class F1Score(tf.keras.metrics.Metric):
     def __init__(self, name='f1_score', **kwargs):
         super(F1Score, self).__init__(name=name, **kwargs)
@@ -32,6 +31,54 @@ class F1Score(tf.keras.metrics.Metric):
     def reset_state(self):
         self.precision_metric.reset_state()
         self.recall_metric.reset_state()
+
+# --- Patching InputLayer for compatibility ---
+# Renaming original InputLayer to avoid conflict when defining PatchedInputLayer
+from tensorflow.keras.layers import InputLayer as OriginalKerasInputLayer
+
+def patch_input_layer():
+    """
+    Patches the InputLayer to handle 'batch_shape' arguments from older models.
+    This modifies the global Keras custom objects registry.
+    """
+    class PatchedInputLayer(OriginalKerasInputLayer):
+        @classmethod
+        def from_config(cls, config):
+            if 'batch_shape' in config and 'input_shape' not in config:
+                config['input_shape'] = config['batch_shape'][1:]
+                del config['batch_shape']
+            return super().from_config(config)
+            
+    tf.keras.utils.get_custom_objects()['InputLayer'] = PatchedInputLayer
+    print("InputLayer has been patched for batch_shape compatibility.")
+
+# --- Dummy DTypePolicy for compatibility ---
+class DummyDTypePolicy:
+    """A dummy class to act as a placeholder for DTypePolicy during deserialization."""
+    def __init__(self, name=None, **kwargs):
+        self.name = name or 'float32'
+        # Crucially, ensure these attributes exist and return expected types/values
+        self._compute_dtype = tf.float32
+        self._variable_dtype = tf.float32
+
+    @property
+    def compute_dtype(self):
+        return self._compute_dtype
+
+    @property
+    def variable_dtype(self):
+        return self._variable_dtype
+
+    def get_config(self):
+        return {'name': self.name}
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+# Call the patch functions at the beginning of your script, before load_model
+patch_input_layer()
+
 
 # Konstanta
 IMG_SIZE = 224
@@ -157,37 +204,10 @@ def preprocess_with_steps(img_array, sigmaX=10):
     
     return img, steps
 
-# --- Function to build the model architecture ---
-def build_efficientnet_model(input_shape=(IMG_SIZE, IMG_SIZE, 3), num_classes=5):
-    """
-    Builds the EfficientNetB0 model architecture as described.
-    """
-    # Define the input layer
-    inputs = Input(shape=input_shape)
-
-    # EfficientNetB0 base model, exclude the top classification layer
-    # and don't load pre-trained ImageNet weights here, load your weights later.
-    base_model = EfficientNetB0(
-        input_tensor=inputs, # Connect to our custom input
-        include_top=False,
-        weights=None # Do NOT load 'imagenet' weights here; load your BestModel.h5 weights.
-    )
-
-    # Add your custom top layers as per your model's architecture
-    x = base_model.output
-    x = GlobalAveragePooling2D()(x)
-    x = Dense(128, activation='relu')(x)
-    x = BatchNormalization()(x)
-    x = Dropout(0.3)(x) # Assuming 0.3 dropout rate. Adjust if different.
-    outputs = Dense(num_classes, activation='softmax')(x) # Assuming 5 classes and softmax
-
-    # Create the complete model
-    model = Model(inputs=inputs, outputs=outputs)
-    return model
 
 @st.cache_resource
 def load_trained_model():
-    """Load the trained model by reconstructing the model and loading weights."""
+    """Load the trained model directly using load_model, with compatibility patches."""
     model_path = 'BestModel.h5'
     
     if not os.path.exists(model_path):
@@ -196,16 +216,22 @@ def load_trained_model():
         return None
     
     try:
-        # Step 1: Reconstruct the model architecture
-        with st.spinner("Reconstructing model architecture..."):
-            # Ensure num_classes matches your model's output
-            model = build_efficientnet_model(input_shape=(IMG_SIZE, IMG_SIZE, 3), num_classes=5)
+        # Define custom objects for loading the model
+        custom_objects = {
+            'accuracy': tf.keras.metrics.Accuracy(),
+            'auc_1': tf.keras.metrics.AUC(name='auc_1'), # Use the exact name from your loaded model
+            'precision_2': tf.keras.metrics.Precision(name='precision_2'), # Use the exact name from your loaded model
+            'recall_2': tf.keras.metrics.Recall(name='recall_2'), # Use the exact name from your loaded model
+            'F1Score': F1Score(), # Your custom F1Score class
+            'DTypePolicy': DummyDTypePolicy # Our dummy for DTypePolicy
+            # 'InputLayer' is handled by the global patch_input_layer()
+        }
 
-        # Step 2: Load weights from the .h5 file
-        with st.spinner(f"Loading weights from '{model_path}'..."):
-            model.load_weights(model_path)
-            
-        st.success(f"✅ Model berhasil dimuat dari '{model_path}' (weights only)")
+        with st.spinner("Loading model..."):
+            # Attempt to load the entire model directly
+            # compile=False is safer to avoid issues with optimizer/loss if not needed for inference
+            model = load_model(model_path, custom_objects=custom_objects, compile=False)
+        st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
     except Exception as e:
         st.error(f"❌ Error loading model: {str(e)}")
