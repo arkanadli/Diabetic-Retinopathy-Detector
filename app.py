@@ -9,14 +9,10 @@ import io
 import os
 
 # Import necessary custom metrics if they are part of your model
-# You need to define these classes or functions if they are not standard Keras metrics
-# For example, if F1Score is a custom metric:
 from tensorflow.keras import backend as K
+from tensorflow.keras.layers import InputLayer as KerasInputLayer # Keep original InputLayer name if needed
 
 # Define your custom metrics if they are not built-in Keras metrics
-# If 'Accuracy', 'AUC', 'Precision', 'Recall' are just aliases for built-in Keras metrics,
-# you might not need to define them explicitly here.
-# Assuming F1Score is a custom one you defined:
 class F1Score(tf.keras.metrics.Metric):
     def __init__(self, name='f1_score', **kwargs):
         super(F1Score, self).__init__(name=name, **kwargs)
@@ -30,7 +26,6 @@ class F1Score(tf.keras.metrics.Metric):
     def result(self):
         p = self.precision_metric.result()
         r = self.recall_metric.result()
-        # Avoid division by zero
         if p + r == 0:
             return 0.0
         return 2 * ((p * r) / (p + r))
@@ -39,10 +34,17 @@ class F1Score(tf.keras.metrics.Metric):
         self.precision_metric.reset_state()
         self.recall_metric.reset_state()
 
+# Custom InputLayer to handle 'batch_shape' from older models
+class CustomInputLayer(tf.keras.layers.InputLayer):
+    def __init__(self, **kwargs):
+        if 'batch_shape' in kwargs and 'input_shape' not in kwargs:
+            kwargs['input_shape'] = kwargs['batch_shape'][1:] # Exclude batch dimension
+        super().__init__(**kwargs)
+
 # Konstanta
 IMG_SIZE = 224
 
-# Konfigurasi halaman
+# Konfigurasi halaman (unchanged)
 st.set_page_config(
     page_title="Deteksi Retinopati Diabetik",
     page_icon="👁️",
@@ -175,22 +177,21 @@ def load_trained_model():
     
     try:
         # Define custom objects for loading the model
-        # Replace 'Accuracy', 'AUC', 'Precision', 'Recall' with their actual Keras metric objects
-        # If your model was compiled with specific names for metrics (e.g., 'auc_1', 'precision_2'),
-        # you need to map them to the corresponding Keras metric functions or custom metric classes.
         custom_objects = {
             'accuracy': tf.keras.metrics.Accuracy(),
-            'auc_1': tf.keras.metrics.AUC(name='auc_1'),  # Use the exact name from your loaded model
-            'precision_2': tf.keras.metrics.Precision(name='precision_2'),  # Use the exact name from your loaded model
-            'recall_2': tf.keras.metrics.Recall(name='recall_2'),  # Use the exact name from your loaded model
-            'F1Score': F1Score() # Assuming F1Score is a custom class you defined above
+            # Ensure these names match exactly what was used during saving
+            'auc_1': tf.keras.metrics.AUC(name='auc_1'),
+            'precision_2': tf.keras.metrics.Precision(name='precision_2'),
+            'recall_2': tf.keras.metrics.Recall(name='recall_2'),
+            'F1Score': F1Score(), # Instantiate your custom F1Score class
+            # This is the crucial part for handling the 'batch_shape' error
+            # Map the old 'InputLayer' (if it's referred to by name) to our custom one
+            'InputLayer': CustomInputLayer
         }
 
         with st.spinner("Loading model..."):
             # Load the model with custom_objects
-            model = load_model(model_path, custom_objects=custom_objects, compile=False) # compile=False is often safer for loading
-            # If you specifically need to re-compile for fine-tuning or specific inference needs, do it here
-            # model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=[...])
+            model = load_model(model_path, custom_objects=custom_objects, compile=False)
         st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
     except Exception as e:
@@ -247,7 +248,7 @@ def get_severity_info(class_idx):
     }
     return severity_info.get(class_idx, severity_info[0])
 
-# Interface utama
+# Interface utama (unchanged)
 def main():
     # Header
     st.markdown("""
@@ -297,15 +298,20 @@ def main():
         if uploaded_model is not None:
             try:
                 # Save uploaded model temporarily
-                with open("BestModel.h5", "wb") as f:
+                temp_model_path = "BestModel.h5"
+                with open(temp_model_path, "wb") as f:
                     f.write(uploaded_model.getbuffer())
                 
                 # Reload model
                 model = load_trained_model()
                 if model is not None:
+                    # Clean up the temporary file after successful load
+                    if os.path.exists(temp_model_path):
+                        os.remove(temp_model_path)
                     st.experimental_rerun()
             except Exception as e:
-                st.error(f"Error saving model: {str(e)}")
+                st.error(f"Error saving or reloading model: {str(e)}")
+                st.exception(e) # Show full traceback for upload errors too
         
         return
     
