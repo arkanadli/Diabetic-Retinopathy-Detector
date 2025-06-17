@@ -11,6 +11,7 @@ import os
 # Import necessary custom metrics if they are part of your model
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import InputLayer as OriginalInputLayer
+from tensorflow.keras.mixed_precision import DTypePolicy as MixedPrecisionDTypePolicy # <--- Explicit import
 
 # Define your custom metrics if they are not built-in Keras metrics
 class F1Score(tf.keras.metrics.Metric):
@@ -196,25 +197,21 @@ def load_trained_model():
         # Define custom objects for loading the model
         custom_objects = {
             'accuracy': tf.keras.metrics.Accuracy(),
-            # Ensure these names match exactly what was used during saving
             'auc_1': tf.keras.metrics.AUC(name='auc_1'),
             'precision_2': tf.keras.metrics.Precision(name='precision_2'),
             'recall_2': tf.keras.metrics.Recall(name='recall_2'),
-            'F1Score': F1Score(), # Instantiate your custom F1Score class
-            # Use tf.keras.Policy instead of tf.keras.mixed_precision.DTypePolicy
-            # This is the correct class in newer Keras versions for policy handling
-            'DTypePolicy': tf.keras.Policy
+            'F1Score': F1Score(),
+            # For TensorFlow 2.15.0, DTypePolicy is in mixed_precision
+            'DTypePolicy': MixedPrecisionDTypePolicy # Use the explicitly imported one
         }
 
         with st.spinner("Loading model..."):
-            # Load the model with custom_objects
-            # The global patch for InputLayer will handle the batch_shape issue
             model = load_model(model_path, custom_objects=custom_objects, compile=False)
         st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
     except Exception as e:
         st.error(f"❌ Error loading model: {str(e)}")
-        st.exception(e) # Display full exception for debugging
+        st.exception(e)
         return None
 
 def predict_retinopathy(model, processed_img):
