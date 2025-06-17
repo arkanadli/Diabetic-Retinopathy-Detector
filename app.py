@@ -2,9 +2,9 @@ import streamlit as st
 import cv2
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import load_model, Model # Keep load_model
+from tensorflow.keras.models import load_model, Model
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, BatchNormalization, Dropout, Input
-from tensorflow.keras.applications import EfficientNetB0 # Keep if needed for reconstruction fallback
+from tensorflow.keras.applications import EfficientNetB0
 import matplotlib.pyplot as plt
 from PIL import Image
 import io
@@ -33,7 +33,6 @@ class F1Score(tf.keras.metrics.Metric):
         self.recall_metric.reset_state()
 
 # --- Patching InputLayer for compatibility ---
-# Renaming original InputLayer to avoid conflict when defining PatchedInputLayer
 from tensorflow.keras.layers import InputLayer as OriginalKerasInputLayer
 
 def patch_input_layer():
@@ -57,7 +56,6 @@ class DummyDTypePolicy:
     """A dummy class to act as a placeholder for DTypePolicy during deserialization."""
     def __init__(self, name=None, **kwargs):
         self.name = name or 'float32'
-        # Crucially, ensure these attributes exist and return expected types/values
         self._compute_dtype = tf.float32
         self._variable_dtype = tf.float32
 
@@ -79,7 +77,6 @@ class DummyDTypePolicy:
 # Call the patch functions at the beginning of your script, before load_model
 patch_input_layer()
 
-
 # Konstanta
 IMG_SIZE = 224
 
@@ -91,118 +88,115 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Fungsi preprocessing (unchanged)
+# --- NEW Preprocessing functions based on your specification ---
+
+def crop_all_sides(img, tol=7):
+    """Crop all sides (top, bottom, left, right) of the image to remove black borders"""
+    if img.ndim == 3:
+        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    else:
+        gray = img.copy()
+
+    # Create mask where non-black pixels are True
+    mask = gray > tol
+
+    # Find rows and columns with non-black pixels
+    rows = np.where(mask.any(axis=1))[0]
+    cols = np.where(mask.any(axis=0))[0]
+
+    # If there are any non-black pixels, crop the image
+    if len(rows) > 0 and len(cols) > 0:
+        top, bottom = rows[0], rows[-1]
+        left, right = cols[0], cols[-1]
+        img = img[top:bottom+1, left:right+1]
+
+    return img
+
+def pad_to_square(img, pad=25, pad_color=(0, 0, 0)):
+    """Pad image to make it square with a specified border"""
+    padded = cv2.copyMakeBorder(img, pad, pad, pad, pad, cv2.BORDER_CONSTANT, value=pad_color)
+    return padded
+
 def resize_img(img, size=224):
     """Resize image to specified size"""
     return cv2.resize(img, (size, size))
 
-def crop_all_sides(img, crop_ratio=0.1):
-    """Crop all sides of the image"""
-    h, w = img.shape[:2]
-    crop_h = int(h * crop_ratio)
-    crop_w = int(w * crop_ratio)
-    return img[crop_h:h-crop_h, crop_w:w-crop_w]
+def create_retina_mask(img, threshold=15):
+    """Create a mask for the retina excluding black pixels"""
+    if img.ndim == 3:
+        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    else:
+        gray = img.copy()
 
-def create_retina_mask(img, threshold=10):
-    """Create mask for retina area (non-black pixels)"""
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    mask = gray > threshold
-    return mask.astype(np.uint8) * 255
+    _, mask = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    return mask
 
 def apply_black_background(img, mask):
-    """Apply mask with black background"""
-    result = img.copy()
-    result[mask == 0] = [0, 0, 0]
+    """Apply mask to image and set background to black"""
+    if mask.ndim == 2 and img.ndim == 3:
+        mask_3ch = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+    else:
+        mask_3ch = mask
+    black_bg = np.zeros_like(img)
+    result = np.where(mask_3ch == 255, img, black_bg)
     return result
 
-def pad_to_square(img):
-    """Pad image to make it square"""
-    h, w = img.shape[:2]
-    max_dim = max(h, w)
-    
-    # Calculate padding
-    pad_h = (max_dim - h) // 2
-    pad_w = (max_dim - w) // 2
-    
-    # Pad the image
-    padded = cv2.copyMakeBorder(
-        img, pad_h, max_dim - h - pad_h, pad_w, max_dim - w - pad_w,
-        cv2.BORDER_CONSTANT, value=[0, 0, 0]
-    )
-    
-    return padded
-
-def preprocess_without_steps(img_array, sigmaX=10):
-    """Preprocess image for model prediction"""
+def preprocess_for_prediction(img_array, sigmaX=10):
+    """Apply preprocessing for model prediction without returning intermediate steps."""
     img = img_array.copy()
-    
-    # Resize to target size
     img = resize_img(img, size=IMG_SIZE)
-    
-    # Crop all sides
+
     img = crop_all_sides(img)
-    
-    # Create retina mask excluding black pixels
     retina_mask = create_retina_mask(img)
-    
-    # Apply Ben Graham's contrast enhancement
-    # Blur menggunakan Gaussian blur
+
     blurred = cv2.GaussianBlur(img, (0, 0), sigmaX)
-    
-    # Hitung difference dan tambahkan offset brightness
     img = cv2.addWeighted(img, 4.0, blurred, -4.0, 128)
-    
-    # Apply masking with black background
+
     img = apply_black_background(img, retina_mask)
-    
-    # Final resize
-    img = resize_img(img, size=IMG_SIZE)
-    
-    # Pad to square
+    img = resize_img(img, size=IMG_SIZE) # Resize again after masking for consistency before padding
     img = pad_to_square(img)
-    img = resize_img(img, size=IMG_SIZE)
-    
+    img = resize_img(img, size=IMG_SIZE) # Final resize to ensure IMG_SIZE
+
     return img
 
 def preprocess_with_steps(img_array, sigmaX=10):
-    """Preprocess image and return steps for visualization"""
+    """Apply preprocessing and return intermediate steps for visualization."""
     steps = {}
     img = img_array.copy()
     
     steps['1. Original'] = img.copy()
     
-    # Resize to target size
     img = resize_img(img, size=IMG_SIZE)
-    steps['2. Resized 224x224'] = img.copy()
-    
-    # Crop all sides
-    img = crop_all_sides(img)
-    steps['3. Cropped Image'] = img.copy()
-    
-    # Create retina mask excluding black pixels
-    retina_mask = create_retina_mask(img)
+    steps['2. Resized to 224x224'] = img.copy()
+
+    img_cropped = crop_all_sides(img)
+    steps['3. Cropped Borders'] = img_cropped.copy()
+
+    retina_mask = create_retina_mask(img_cropped)
     steps['4. Retina Mask'] = cv2.cvtColor(retina_mask, cv2.COLOR_GRAY2RGB)
+
+    # Apply Ben Graham's contrast enhancement on the cropped image
+    blurred = cv2.GaussianBlur(img_cropped, (0, 0), sigmaX)
+    img_enhanced = cv2.addWeighted(img_cropped, 4.0, blurred, -4.0, 128)
+    steps['5. Ben Graham Enhancement'] = img_enhanced.copy()
+
+    img_masked = apply_black_background(img_enhanced, retina_mask)
+    steps['6. Masked with Black Background'] = img_masked.copy()
+
+    # Final resizing and padding
+    img_final_resized = resize_img(img_masked, size=IMG_SIZE)
+    steps['7. Resized after Masking'] = img_final_resized.copy()
+
+    img_padded = pad_to_square(img_final_resized)
+    steps['8. Padded to Square'] = img_padded.copy()
+
+    img_final = resize_img(img_padded, size=IMG_SIZE)
+    steps['9. Final Preprocessed (224x224)'] = img_final.copy()
     
-    # Apply Ben Graham's contrast enhancement
-    # Blur menggunakan Gaussian blur
-    blurred = cv2.GaussianBlur(img, (0, 0), sigmaX)
-    
-    # Hitung difference dan tambahkan offset brightness
-    img = cv2.addWeighted(img, 4.0, blurred, -4.0, 128)
-    
-    # Apply masking with black background
-    img = apply_black_background(img, retina_mask)
-    steps['5. Enhanced (Ben Graham)'] = img.copy()
-    
-    # Final resize
-    img = resize_img(img, size=IMG_SIZE)
-    
-    # Pad to square
-    img = pad_to_square(img)
-    img = resize_img(img, size=IMG_SIZE)
-    steps['6. Final Preprocessed'] = img.copy()
-    
-    return img, steps
+    return img_final, steps
 
 
 @st.cache_resource
@@ -216,20 +210,16 @@ def load_trained_model():
         return None
     
     try:
-        # Define custom objects for loading the model
         custom_objects = {
             'accuracy': tf.keras.metrics.Accuracy(),
-            'auc_1': tf.keras.metrics.AUC(name='auc_1'), # Use the exact name from your loaded model
-            'precision_2': tf.keras.metrics.Precision(name='precision_2'), # Use the exact name from your loaded model
-            'recall_2': tf.keras.metrics.Recall(name='recall_2'), # Use the exact name from your loaded model
-            'F1Score': F1Score(), # Your custom F1Score class
-            'DTypePolicy': DummyDTypePolicy # Our dummy for DTypePolicy
-            # 'InputLayer' is handled by the global patch_input_layer()
+            'auc_1': tf.keras.metrics.AUC(name='auc_1'), 
+            'precision_2': tf.keras.metrics.Precision(name='precision_2'),
+            'recall_2': tf.keras.metrics.Recall(name='recall_2'), 
+            'F1Score': F1Score(), 
+            'DTypePolicy': DummyDTypePolicy 
         }
 
         with st.spinner("Loading model..."):
-            # Attempt to load the entire model directly
-            # compile=False is safer to avoid issues with optimizer/loss if not needed for inference
             model = load_model(model_path, custom_objects=custom_objects, compile=False)
         st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
@@ -240,15 +230,9 @@ def load_trained_model():
 
 def predict_retinopathy(model, processed_img):
     """Make prediction using the loaded model"""
-    # Normalize pixel values to [0, 1]
     img_normalized = processed_img.astype(np.float32) / 255.0
-    
-    # Add batch dimension
     img_batch = np.expand_dims(img_normalized, axis=0)
-    
-    # Make prediction
     prediction = model.predict(img_batch, verbose=0)
-    
     return prediction[0]
 
 def get_severity_info(class_idx):
@@ -287,9 +271,7 @@ def get_severity_info(class_idx):
     }
     return severity_info.get(class_idx, severity_info[0])
 
-# Interface utama (unchanged)
 def main():
-    # Header
     st.markdown("""
     <div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 10px; margin-bottom: 2rem;">
         <h1 style="color: white; text-align: center; margin-bottom: 0.5rem;">👁️ Sistem Deteksi Retinopati Diabetik</h1>
@@ -297,7 +279,6 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar
     with st.sidebar:
         st.header("📊 Informasi Model")
         st.markdown("""
@@ -310,23 +291,24 @@ def main():
         - Output Layer (5 classes)
         
         **Preprocessing:**
-        - Resize & Crop
-        - Ben Graham Enhancement
-        - Gaussian Blur
-        - Retina Masking
+        - **Initial Resize**
+        - **Automated Cropping (Black Borders)**
+        - **Retina Masking**
+        - **Ben Graham Enhancement**
+        - **Gaussian Blur**
+        - **Apply Masking with Black Background**
+        - **Final Resize & Padding to Square**
         """)
         
         st.header("⚙️ Parameter")
         sigma_x = st.slider("Sigma X (Gaussian Blur)", 5, 20, 10, 1)
         show_steps = st.checkbox("Tampilkan Tahapan Preprocessing", value=True)
     
-    # Load model
     model = load_trained_model()
     
     if model is None:
         st.warning("⚠️ Model tidak dapat dimuat. Upload file model atau periksa path file.")
         
-        # Option to upload model file
         st.subheader("📤 Upload Model File")
         uploaded_model = st.file_uploader(
             "Upload file BestModel.h5", 
@@ -336,25 +318,21 @@ def main():
         
         if uploaded_model is not None:
             try:
-                # Save uploaded model temporarily
                 temp_model_path = "BestModel.h5"
                 with open(temp_model_path, "wb") as f:
                     f.write(uploaded_model.getbuffer())
                 
-                # Reload model
                 model = load_trained_model()
                 if model is not None:
-                    # Clean up the temporary file after successful load
                     if os.path.exists(temp_model_path):
                         os.remove(temp_model_path)
                     st.experimental_rerun()
             except Exception as e:
                 st.error(f"Error saving or reloading model: {str(e)}")
-                st.exception(e) # Show full traceback for upload errors too
+                st.exception(e)
         
         return
     
-    # File uploader
     uploaded_file = st.file_uploader(
         "📁 Upload Gambar Fundus Retina",
         type=['png', 'jpg', 'jpeg'],
@@ -363,16 +341,14 @@ def main():
     
     if uploaded_file is not None:
         try:
-            # Load dan konversi gambar
             pil_image = Image.open(uploaded_file)
             img_array = np.array(pil_image)
             
-            # Konversi ke RGB jika perlu
-            if len(img_array.shape) == 3 and img_array.shape[2] == 4:  # RGBA
+            if len(img_array.shape) == 3 and img_array.shape[2] == 4:
                 img_array = cv2.cvtColor(img_array, cv2.COLOR_RGBA2RGB)
-            elif len(img_array.shape) == 3 and img_array.shape[2] == 3:  # Already RGB
+            elif len(img_array.shape) == 3 and img_array.shape[2] == 3:
                 pass
-            else:  # Grayscale
+            else:
                 img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
             
             col1, col2 = st.columns([1, 1])
@@ -381,19 +357,15 @@ def main():
                 st.subheader("🖼️ Gambar Original")
                 st.image(img_array, caption="Gambar yang diupload", use_column_width=True)
             
-            # Preprocessing
             if show_steps:
                 processed_img, steps = preprocess_with_steps(img_array, sigma_x)
                 
                 with col2:
                     st.subheader("🔄 Tahapan Preprocessing")
-                    
-                    # Tampilkan tahapan preprocessing
                     step_names = list(steps.keys())
                     selected_step = st.selectbox("Pilih tahapan:", step_names, index=len(step_names)-1)
                     st.image(steps[selected_step], caption=selected_step, use_column_width=True)
                 
-                # Tampilkan semua tahapan dalam grid
                 st.subheader("📋 Semua Tahapan Preprocessing")
                 cols = st.columns(3)
                 for i, (step_name, step_img) in enumerate(steps.items()):
@@ -401,28 +373,23 @@ def main():
                         st.image(step_img, caption=step_name, use_column_width=True)
                         
             else:
-                processed_img = preprocess_without_steps(img_array, sigma_x)
+                processed_img = preprocess_for_prediction(img_array, sigma_x)
                 with col2:
                     st.subheader("🔄 Gambar Setelah Preprocessing")
                     st.image(processed_img, caption="Siap untuk prediksi", use_column_width=True)
             
-            # Prediksi
             if st.button("🔍 Analisis Retinopati Diabetik", type="primary"):
                 with st.spinner("Sedang menganalisis gambar..."):
                     try:
-                        # Prediksi
                         predictions = predict_retinopathy(model, processed_img)
                         predicted_class = np.argmax(predictions)
                         confidence = predictions[predicted_class]
                         
-                        # Informasi hasil prediksi
                         severity_info = get_severity_info(predicted_class)
                         
-                        # Tampilkan hasil
                         st.markdown("---")
                         st.subheader("📋 Hasil Analisis")
                         
-                        # Card hasil utama
                         st.markdown(f"""
                         <div style="background-color: {severity_info['color']}; padding: 1.5rem; border-radius: 10px; margin: 1rem 0;">
                             <h3 style="color: white; margin-bottom: 0.5rem;">{severity_info['name']}</h3>
@@ -431,7 +398,6 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # Rekomendasi
                         st.markdown(f"""
                         <div style="background-color: #f8f9fa; padding: 1rem; border-left: 4px solid {severity_info['color']}; margin: 1rem 0;">
                             <h4>💡 Rekomendasi:</h4>
@@ -439,7 +405,6 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # Grafik probabilitas
                         st.subheader("📊 Distribusi Probabilitas")
                         
                         class_names = [
@@ -450,18 +415,15 @@ def main():
                             "Proliferative DR"
                         ]
                         
-                        # Bar chart
                         fig, ax = plt.subplots(figsize=(10, 6))
                         bars = ax.bar(class_names, predictions)
                         
-                        # Highlight predicted class
                         bars[predicted_class].set_color(severity_info['color'])
                         
                         ax.set_ylabel('Probabilitas')
                         ax.set_title('Distribusi Probabilitas Tingkat Keparahan')
                         ax.set_ylim(0, 1)
                         
-                        # Add percentage labels on bars
                         for i, (bar, prob) in enumerate(zip(bars, predictions)):
                             ax.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
                                     f'{prob:.1%}', ha='center', va='bottom')
@@ -470,7 +432,6 @@ def main():
                         plt.tight_layout()
                         st.pyplot(fig)
                         
-                        # Detail probabilitas
                         st.subheader("📈 Detail Probabilitas")
                         prob_df = {
                             "Tingkat Keparahan": class_names,
@@ -485,7 +446,6 @@ def main():
         except Exception as e:
             st.error(f"❌ Error saat memproses gambar: {str(e)}")
     
-    # Footer (unchanged)
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #666; padding: 1rem;">
