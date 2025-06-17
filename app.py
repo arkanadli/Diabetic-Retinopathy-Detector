@@ -12,17 +12,6 @@ import os
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import InputLayer as OriginalInputLayer
 
-# Try importing Policy, which might be the renamed DTypePolicy
-# If this fails, we'll consider a custom Rescaling layer.
-try:
-    from tensorflow.keras.mixed_precision import Policy as MixedPrecisionPolicy
-except ImportError:
-    # Fallback for older TF versions where DTypePolicy might have been directly available
-    # Or for environments where mixed_precision isn't set up the same way
-    MixedPrecisionPolicy = None
-    print("Warning: Could not import tf.keras.mixed_precision.Policy. Mixed precision features might be limited.")
-
-
 # Define your custom metrics if they are not built-in Keras metrics
 class F1Score(tf.keras.metrics.Metric):
     def __init__(self, name='f1_score', **kwargs):
@@ -212,20 +201,14 @@ def load_trained_model():
             'precision_2': tf.keras.metrics.Precision(name='precision_2'),
             'recall_2': tf.keras.metrics.Recall(name='recall_2'),
             'F1Score': F1Score(), # Instantiate your custom F1Score class
+            # Use tf.keras.Policy instead of tf.keras.mixed_precision.DTypePolicy
+            # This is the correct class in newer Keras versions for policy handling
+            'DTypePolicy': tf.keras.Policy
         }
-
-        # Conditionally add MixedPrecisionPolicy if it was successfully imported
-        if MixedPrecisionPolicy is not None:
-            custom_objects['DTypePolicy'] = MixedPrecisionPolicy
-        else:
-            # Fallback if Policy could not be imported
-            # This might require more advanced patching if the error persists.
-            # For now, let's proceed and see if the model can be loaded without it,
-            # or if it raises a different error.
-            print("Skipping DTypePolicy in custom_objects as it was not found.")
 
         with st.spinner("Loading model..."):
             # Load the model with custom_objects
+            # The global patch for InputLayer will handle the batch_shape issue
             model = load_model(model_path, custom_objects=custom_objects, compile=False)
         st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
@@ -440,7 +423,7 @@ def main():
                         
                         class_names = [
                             "No DR",
-                            "Mild DR",
+                            "Mild DR", 
                             "Moderate DR",
                             "Severe DR",
                             "Proliferative DR"
