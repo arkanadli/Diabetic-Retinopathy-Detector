@@ -11,7 +11,6 @@ import os
 # Import necessary custom metrics if they are part of your model
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import InputLayer as OriginalInputLayer
-from tensorflow.keras.mixed_precision import DTypePolicy as MixedPrecisionDTypePolicy # <--- Explicit import
 
 # Define your custom metrics if they are not built-in Keras metrics
 class F1Score(tf.keras.metrics.Metric):
@@ -201,8 +200,10 @@ def load_trained_model():
             'precision_2': tf.keras.metrics.Precision(name='precision_2'),
             'recall_2': tf.keras.metrics.Recall(name='recall_2'),
             'F1Score': F1Score(),
-            # For TensorFlow 2.15.0, DTypePolicy is in mixed_precision
-            'DTypePolicy': MixedPrecisionDTypePolicy # Use the explicitly imported one
+            # Crucially, for DTypePolicy, we'll try a generic object or None
+            # as direct imports are failing due to subtle version differences.
+            # This allows Keras to ignore the policy if it's not strictly needed for inference.
+            'DTypePolicy': None # <--- New approach: Map DTypePolicy to None
         }
 
         with st.spinner("Loading model..."):
