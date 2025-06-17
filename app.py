@@ -88,7 +88,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- NEW Preprocessing functions based on your specification ---
+# --- Preprocessing functions ---
 
 def crop_all_sides(img, tol=7):
     """Crop all sides (top, bottom, left, right) of the image to remove black borders"""
@@ -97,14 +97,11 @@ def crop_all_sides(img, tol=7):
     else:
         gray = img.copy()
 
-    # Create mask where non-black pixels are True
     mask = gray > tol
 
-    # Find rows and columns with non-black pixels
     rows = np.where(mask.any(axis=1))[0]
     cols = np.where(mask.any(axis=0))[0]
 
-    # If there are any non-black pixels, crop the image
     if len(rows) > 0 and len(cols) > 0:
         top, bottom = rows[0], rows[-1]
         left, right = cols[0], cols[-1]
@@ -144,8 +141,9 @@ def apply_black_background(img, mask):
     result = np.where(mask_3ch == 255, img, black_bg)
     return result
 
-def preprocess_for_prediction(img_array, sigmaX=10):
-    """Apply preprocessing for model prediction without returning intermediate steps."""
+# Combined preprocessing function, no longer returning steps
+def preprocess_image_for_prediction(img_array, sigmaX=10):
+    """Apply all preprocessing steps to an image array."""
     img = img_array.copy()
     img = resize_img(img, size=IMG_SIZE)
 
@@ -156,47 +154,11 @@ def preprocess_for_prediction(img_array, sigmaX=10):
     img = cv2.addWeighted(img, 4.0, blurred, -4.0, 128)
 
     img = apply_black_background(img, retina_mask)
-    img = resize_img(img, size=IMG_SIZE) # Resize again after masking for consistency before padding
+    img = resize_img(img, size=IMG_SIZE)
     img = pad_to_square(img)
-    img = resize_img(img, size=IMG_SIZE) # Final resize to ensure IMG_SIZE
+    img = resize_img(img, size=IMG_SIZE)
 
     return img
-
-def preprocess_with_steps(img_array, sigmaX=10):
-    """Apply preprocessing and return intermediate steps for visualization."""
-    steps = {}
-    img = img_array.copy()
-    
-    steps['1. Original'] = img.copy()
-    
-    img = resize_img(img, size=IMG_SIZE)
-    steps['2. Resized to 224x224'] = img.copy()
-
-    img_cropped = crop_all_sides(img)
-    steps['3. Cropped Borders'] = img_cropped.copy()
-
-    retina_mask = create_retina_mask(img_cropped)
-    steps['4. Retina Mask'] = cv2.cvtColor(retina_mask, cv2.COLOR_GRAY2RGB)
-
-    # Apply Ben Graham's contrast enhancement on the cropped image
-    blurred = cv2.GaussianBlur(img_cropped, (0, 0), sigmaX)
-    img_enhanced = cv2.addWeighted(img_cropped, 4.0, blurred, -4.0, 128)
-    steps['5. Ben Graham Enhancement'] = img_enhanced.copy()
-
-    img_masked = apply_black_background(img_enhanced, retina_mask)
-    steps['6. Masked with Black Background'] = img_masked.copy()
-
-    # Final resizing and padding
-    img_final_resized = resize_img(img_masked, size=IMG_SIZE)
-    steps['7. Resized after Masking'] = img_final_resized.copy()
-
-    img_padded = pad_to_square(img_final_resized)
-    steps['8. Padded to Square'] = img_padded.copy()
-
-    img_final = resize_img(img_padded, size=IMG_SIZE)
-    steps['9. Final Preprocessed (224x224)'] = img_final.copy()
-    
-    return img_final, steps
 
 
 @st.cache_resource
@@ -272,6 +234,7 @@ def get_severity_info(class_idx):
     return severity_info.get(class_idx, severity_info[0])
 
 def main():
+    # Header
     st.markdown("""
     <div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 10px; margin-bottom: 2rem;">
         <h1 style="color: white; text-align: center; margin-bottom: 0.5rem;">👁️ Sistem Deteksi Retinopati Diabetik</h1>
@@ -279,6 +242,7 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
+    # Sidebar
     with st.sidebar:
         st.header("📊 Informasi Model")
         st.markdown("""
@@ -302,8 +266,9 @@ def main():
         
         st.header("⚙️ Parameter")
         sigma_x = st.slider("Sigma X (Gaussian Blur)", 5, 20, 10, 1)
-        show_steps = st.checkbox("Tampilkan Tahapan Preprocessing", value=True)
+        # The 'show_steps' checkbox is already removed from the previous iteration.
     
+    # Load model
     model = load_trained_model()
     
     if model is None:
@@ -333,6 +298,7 @@ def main():
         
         return
     
+    # File uploader
     uploaded_file = st.file_uploader(
         "📁 Upload Gambar Fundus Retina",
         type=['png', 'jpg', 'jpeg'],
@@ -341,43 +307,26 @@ def main():
     
     if uploaded_file is not None:
         try:
+            # Load dan konversi gambar
             pil_image = Image.open(uploaded_file)
             img_array = np.array(pil_image)
             
-            if len(img_array.shape) == 3 and img_array.shape[2] == 4:
+            # Konversi ke RGB jika perlu
+            if len(img_array.shape) == 3 and img_array.shape[2] == 4:  # RGBA
                 img_array = cv2.cvtColor(img_array, cv2.COLOR_RGBA2RGB)
-            elif len(img_array.shape) == 3 and img_array.shape[2] == 3:
+            elif len(img_array.shape) == 3 and img_array.shape[2] == 3:  # Already RGB
                 pass
-            else:
+            else:  # Grayscale
                 img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
             
-            col1, col2 = st.columns([1, 1])
+            # Display only the original image
+            st.subheader("🖼️ Gambar Original")
+            st.image(img_array, caption="Gambar yang diupload", use_column_width=True)
             
-            with col1:
-                st.subheader("🖼️ Gambar Original")
-                st.image(img_array, caption="Gambar yang diupload", use_column_width=True)
+            # Preprocessing (happens internally without display)
+            processed_img = preprocess_image_for_prediction(img_array, sigma_x)
             
-            if show_steps:
-                processed_img, steps = preprocess_with_steps(img_array, sigma_x)
-                
-                with col2:
-                    st.subheader("🔄 Tahapan Preprocessing")
-                    step_names = list(steps.keys())
-                    selected_step = st.selectbox("Pilih tahapan:", step_names, index=len(step_names)-1)
-                    st.image(steps[selected_step], caption=selected_step, use_column_width=True)
-                
-                st.subheader("📋 Semua Tahapan Preprocessing")
-                cols = st.columns(3)
-                for i, (step_name, step_img) in enumerate(steps.items()):
-                    with cols[i % 3]:
-                        st.image(step_img, caption=step_name, use_column_width=True)
-                        
-            else:
-                processed_img = preprocess_for_prediction(img_array, sigma_x)
-                with col2:
-                    st.subheader("🔄 Gambar Setelah Preprocessing")
-                    st.image(processed_img, caption="Siap untuk prediksi", use_column_width=True)
-            
+            # Prediction button
             if st.button("🔍 Analisis Retinopati Diabetik", type="primary"):
                 with st.spinner("Sedang menganalisis gambar..."):
                     try:
@@ -385,11 +334,14 @@ def main():
                         predicted_class = np.argmax(predictions)
                         confidence = predictions[predicted_class]
                         
+                        # Informasi hasil prediksi
                         severity_info = get_severity_info(predicted_class)
                         
+                        # Tampilkan hasil
                         st.markdown("---")
                         st.subheader("📋 Hasil Analisis")
                         
+                        # Card hasil utama
                         st.markdown(f"""
                         <div style="background-color: {severity_info['color']}; padding: 1.5rem; border-radius: 10px; margin: 1rem 0;">
                             <h3 style="color: white; margin-bottom: 0.5rem;">{severity_info['name']}</h3>
@@ -398,6 +350,7 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                         
+                        # Rekomendasi
                         st.markdown(f"""
                         <div style="background-color: #f8f9fa; padding: 1rem; border-left: 4px solid {severity_info['color']}; margin: 1rem 0;">
                             <h4>💡 Rekomendasi:</h4>
@@ -405,6 +358,7 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                         
+                        # Grafik probabilitas
                         st.subheader("📊 Distribusi Probabilitas")
                         
                         class_names = [
@@ -415,15 +369,18 @@ def main():
                             "Proliferative DR"
                         ]
                         
+                        # Bar chart
                         fig, ax = plt.subplots(figsize=(10, 6))
                         bars = ax.bar(class_names, predictions)
                         
+                        # Highlight predicted class
                         bars[predicted_class].set_color(severity_info['color'])
                         
                         ax.set_ylabel('Probabilitas')
                         ax.set_title('Distribusi Probabilitas Tingkat Keparahan')
                         ax.set_ylim(0, 1)
                         
+                        # Add percentage labels on bars
                         for i, (bar, prob) in enumerate(zip(bars, predictions)):
                             ax.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
                                     f'{prob:.1%}', ha='center', va='bottom')
@@ -432,6 +389,7 @@ def main():
                         plt.tight_layout()
                         st.pyplot(fig)
                         
+                        # Detail probabilitas
                         st.subheader("📈 Detail Probabilitas")
                         prob_df = {
                             "Tingkat Keparahan": class_names,
@@ -446,6 +404,7 @@ def main():
         except Exception as e:
             st.error(f"❌ Error saat memproses gambar: {str(e)}")
     
+    # Footer
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #666; padding: 1rem;">
