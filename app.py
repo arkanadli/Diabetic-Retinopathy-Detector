@@ -45,17 +45,42 @@ def patch_input_layer():
         def from_config(cls, config):
             if 'batch_shape' in config and 'input_shape' not in config:
                 config['input_shape'] = config['batch_shape'][1:]
-                # Remove batch_shape from config to avoid the TypeError
                 del config['batch_shape']
             return super().from_config(config)
             
-    # Register the patched layer in Keras's custom objects registry
     tf.keras.utils.get_custom_objects()['InputLayer'] = PatchedInputLayer
     print("InputLayer has been patched for batch_shape compatibility.")
 
-# Call the patch function at the beginning of your script, before load_model
+# --- Dummy DTypePolicy for compatibility ---
+# This is a last resort to handle models saved with specific DTypePolicy serialization
+# that cannot be found or correctly deserialized in the current TF/Keras version.
+class DummyDTypePolicy:
+    """A dummy class to act as a placeholder for DTypePolicy during deserialization."""
+    def __init__(self, name=None, **kwargs):
+        # We might need to accept a 'name' argument if it's part of the serialized config
+        self.name = name or 'float32' # Default to float32 if name is not provided
+        self._compute_dtype = tf.float32 # Default to float32 for compute
+        self._variable_dtype = tf.float32 # Default to float32 for variables
+
+    @property
+    def compute_dtype(self):
+        return self._compute_dtype
+
+    @property
+    def variable_dtype(self):
+        return self._variable_dtype
+
+    def get_config(self):
+        # Must implement get_config if it might be re-serialized or checked
+        return {'name': self.name}
+
+    @classmethod
+    def from_config(cls, config):
+        # This is how Keras tries to reconstruct it
+        return cls(**config)
+
+# Call the patch functions at the beginning of your script, before load_model
 patch_input_layer()
-# --- End of patching ---
 
 
 # Konstanta (unchanged)
@@ -200,10 +225,8 @@ def load_trained_model():
             'precision_2': tf.keras.metrics.Precision(name='precision_2'),
             'recall_2': tf.keras.metrics.Recall(name='recall_2'),
             'F1Score': F1Score(),
-            # Crucially, for DTypePolicy, we'll try a generic object or None
-            # as direct imports are failing due to subtle version differences.
-            # This allows Keras to ignore the policy if it's not strictly needed for inference.
-            'DTypePolicy': None # <--- New approach: Map DTypePolicy to None
+            # Crucially, map 'DTypePolicy' to our dummy class
+            'DTypePolicy': DummyDTypePolicy
         }
 
         with st.spinner("Loading model..."):
