@@ -10,7 +10,7 @@ import os
 
 # Import necessary custom metrics if they are part of your model
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import InputLayer as KerasInputLayer # Keep original InputLayer name if needed
+from tensorflow.keras.layers import InputLayer as OriginalInputLayer # Rename original InputLayer
 
 # Define your custom metrics if they are not built-in Keras metrics
 class F1Score(tf.keras.metrics.Metric):
@@ -34,12 +34,29 @@ class F1Score(tf.keras.metrics.Metric):
         self.precision_metric.reset_state()
         self.recall_metric.reset_state()
 
-# Custom InputLayer to handle 'batch_shape' from older models
-class CustomInputLayer(tf.keras.layers.InputLayer):
-    def __init__(self, **kwargs):
-        if 'batch_shape' in kwargs and 'input_shape' not in kwargs:
-            kwargs['input_shape'] = kwargs['batch_shape'][1:] # Exclude batch dimension
-        super().__init__(**kwargs)
+# --- Patching InputLayer for compatibility ---
+def patch_input_layer():
+    """
+    Patches the InputLayer to handle 'batch_shape' arguments from older models.
+    This modifies the global Keras custom objects registry.
+    """
+    class PatchedInputLayer(OriginalInputLayer):
+        @classmethod
+        def from_config(cls, config):
+            if 'batch_shape' in config and 'input_shape' not in config:
+                config['input_shape'] = config['batch_shape'][1:]
+                # Remove batch_shape from config to avoid the TypeError
+                del config['batch_shape']
+            return super().from_config(config)
+            
+    # Register the patched layer in Keras's custom objects registry
+    tf.keras.utils.get_custom_objects()['InputLayer'] = PatchedInputLayer
+    print("InputLayer has been patched for batch_shape compatibility.")
+
+# Call the patch function at the beginning of your script, before load_model
+patch_input_layer()
+# --- End of patching ---
+
 
 # Konstanta
 IMG_SIZE = 224
@@ -184,13 +201,12 @@ def load_trained_model():
             'precision_2': tf.keras.metrics.Precision(name='precision_2'),
             'recall_2': tf.keras.metrics.Recall(name='recall_2'),
             'F1Score': F1Score(), # Instantiate your custom F1Score class
-            # This is the crucial part for handling the 'batch_shape' error
-            # Map the old 'InputLayer' (if it's referred to by name) to our custom one
-            'InputLayer': CustomInputLayer
+            # No need to explicitly add 'InputLayer' here if we patch it globally
         }
 
         with st.spinner("Loading model..."):
             # Load the model with custom_objects
+            # The global patch for InputLayer will handle the batch_shape issue
             model = load_model(model_path, custom_objects=custom_objects, compile=False)
         st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
