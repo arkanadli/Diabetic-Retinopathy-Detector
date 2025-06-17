@@ -10,7 +10,7 @@ import os
 
 # Import necessary custom metrics if they are part of your model
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import InputLayer as OriginalInputLayer # Rename original InputLayer
+from tensorflow.keras.layers import InputLayer as OriginalInputLayer
 
 # Define your custom metrics if they are not built-in Keras metrics
 class F1Score(tf.keras.metrics.Metric):
@@ -58,7 +58,7 @@ patch_input_layer()
 # --- End of patching ---
 
 
-# Konstanta
+# Konstanta (unchanged)
 IMG_SIZE = 224
 
 # Konfigurasi halaman (unchanged)
@@ -201,7 +201,8 @@ def load_trained_model():
             'precision_2': tf.keras.metrics.Precision(name='precision_2'),
             'recall_2': tf.keras.metrics.Recall(name='recall_2'),
             'F1Score': F1Score(), # Instantiate your custom F1Score class
-            # No need to explicitly add 'InputLayer' here if we patch it globally
+            # Add DTypePolicy here for Rescaling layer compatibility
+            'DTypePolicy': tf.keras.mixed_precision.DTypePolicy
         }
 
         with st.spinner("Loading model..."):
@@ -423,6 +424,15 @@ def main():
                             "No DR",
                             "Mild DR", 
                             "Moderate DR",
+                            "Mild DR", # Corrected for proper mapping to your 5 classes if needed
+                            "Proliferative DR"
+                        ]
+                        # Double-check your actual class names based on your model's output index
+                        # If class 3 is "Severe DR", correct it here:
+                        class_names = [
+                            "No DR",
+                            "Mild DR",
+                            "Moderate DR",
                             "Severe DR",
                             "Proliferative DR"
                         ]
@@ -462,7 +472,7 @@ def main():
         except Exception as e:
             st.error(f"❌ Error saat memproses gambar: {str(e)}")
     
-    # Footer
+    # Footer (unchanged)
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #666; padding: 1rem;">
