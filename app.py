@@ -8,6 +8,37 @@ from PIL import Image
 import io
 import os
 
+# Import necessary custom metrics if they are part of your model
+# You need to define these classes or functions if they are not standard Keras metrics
+# For example, if F1Score is a custom metric:
+from tensorflow.keras import backend as K
+
+# Define your custom metrics if they are not built-in Keras metrics
+# If 'Accuracy', 'AUC', 'Precision', 'Recall' are just aliases for built-in Keras metrics,
+# you might not need to define them explicitly here.
+# Assuming F1Score is a custom one you defined:
+class F1Score(tf.keras.metrics.Metric):
+    def __init__(self, name='f1_score', **kwargs):
+        super(F1Score, self).__init__(name=name, **kwargs)
+        self.precision_metric = tf.keras.metrics.Precision()
+        self.recall_metric = tf.keras.metrics.Recall()
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        self.precision_metric.update_state(y_true, y_pred, sample_weight)
+        self.recall_metric.update_state(y_true, y_pred, sample_weight)
+
+    def result(self):
+        p = self.precision_metric.result()
+        r = self.recall_metric.result()
+        # Avoid division by zero
+        if p + r == 0:
+            return 0.0
+        return 2 * ((p * r) / (p + r))
+
+    def reset_state(self):
+        self.precision_metric.reset_state()
+        self.recall_metric.reset_state()
+
 # Konstanta
 IMG_SIZE = 224
 
@@ -19,7 +50,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Fungsi preprocessing
+# Fungsi preprocessing (unchanged)
 def resize_img(img, size=224):
     """Resize image to specified size"""
     return cv2.resize(img, (size, size))
@@ -143,12 +174,28 @@ def load_trained_model():
         return None
     
     try:
+        # Define custom objects for loading the model
+        # Replace 'Accuracy', 'AUC', 'Precision', 'Recall' with their actual Keras metric objects
+        # If your model was compiled with specific names for metrics (e.g., 'auc_1', 'precision_2'),
+        # you need to map them to the corresponding Keras metric functions or custom metric classes.
+        custom_objects = {
+            'accuracy': tf.keras.metrics.Accuracy(),
+            'auc_1': tf.keras.metrics.AUC(name='auc_1'),  # Use the exact name from your loaded model
+            'precision_2': tf.keras.metrics.Precision(name='precision_2'),  # Use the exact name from your loaded model
+            'recall_2': tf.keras.metrics.Recall(name='recall_2'),  # Use the exact name from your loaded model
+            'F1Score': F1Score() # Assuming F1Score is a custom class you defined above
+        }
+
         with st.spinner("Loading model..."):
-            model = load_model(model_path)
+            # Load the model with custom_objects
+            model = load_model(model_path, custom_objects=custom_objects, compile=False) # compile=False is often safer for loading
+            # If you specifically need to re-compile for fine-tuning or specific inference needs, do it here
+            # model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=[...])
         st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
     except Exception as e:
         st.error(f"❌ Error loading model: {str(e)}")
+        st.exception(e) # Display full exception for debugging
         return None
 
 def predict_retinopathy(model, processed_img):
@@ -372,7 +419,7 @@ def main():
                         # Add percentage labels on bars
                         for i, (bar, prob) in enumerate(zip(bars, predictions)):
                             ax.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
-                                   f'{prob:.1%}', ha='center', va='bottom')
+                                    f'{prob:.1%}', ha='center', va='bottom')
                         
                         plt.xticks(rotation=45, ha='right')
                         plt.tight_layout()
