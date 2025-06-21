@@ -84,7 +84,7 @@ IMG_SIZE = 224
 st.set_page_config(
     page_title="Deteksi Retinopati Diabetik",
     page_icon="👁️",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="expanded"
 )
 
@@ -322,7 +322,7 @@ def main():
             
             # Display only the original image
             st.subheader("🖼️ Gambar Original")
-            st.image(img_array, caption="Gambar yang diupload", use_column_width=True)
+            st.image(img_array, caption="Gambar yang diupload", width=300)
             
             # Preprocessing (happens internally without display)
             # The sigmaX value is now fixed at 10 within the preprocess_image_for_prediction function
