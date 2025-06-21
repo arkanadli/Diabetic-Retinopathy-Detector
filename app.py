@@ -348,7 +348,7 @@ def main():
             
             # Display only the original image
             st.subheader("🖼️ Gambar Original")
-            st.image(img_array, caption="Gambar yang diupload", use_container_width=True) # Set a fixed width
+            st.image(img_array, caption="Gambar yang diupload", width=300) # Set a fixed width
             
             # Preprocessing (happens internally without display)
             processed_img = preprocess_image_for_prediction(img_array, sigmaX=10) 
@@ -379,9 +379,9 @@ def main():
                         
                         # Rekomendasi
                         st.markdown(f"""
-                        <div style="background-color: #f8f9fa; padding: 1rem; border-left: 4px solid {severity_info['color']}; margin: 1rem 0;">
+                        <div style="background-color: rgb(40, 42, 54); padding: 1rem; border-left: 4px solid {severity_info['color']}; margin: 1rem 0;">
                             <h4>💡 Rekomendasi:</h4>
-                            <p>{severity_info['recommendation']}</p>
+                            <p style="color: white;">{severity_info['recommendation']}</p>
                         </div>
                         """, unsafe_allow_html=True)
                         
