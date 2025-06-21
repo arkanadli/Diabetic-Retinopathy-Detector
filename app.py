@@ -247,27 +247,27 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar
-    with st.sidebar:
-        st.header("📊 Informasi Model")
-        st.markdown("""
-        **Arsitektur Model:**
-        - Base Model: EfficientNetB0
-        - Global Average Pooling
-        - Dropout
-        - Dense Layer
-        - Batch Normalization
-        - Dropout
-        - Output Layer (5 kelas)
+    # # Sidebar
+    # with st.sidebar:
+    #     st.header("📊 Informasi Model")
+    #     st.markdown("""
+    #     **Arsitektur Model:**
+    #     - Base Model: EfficientNetB0
+    #     - Global Average Pooling
+    #     - Dropout
+    #     - Dense Layer
+    #     - Batch Normalization
+    #     - Dropout
+    #     - Output Layer (5 kelas)
         
-        **Tahapan Preprocessing Citra:**
-        - **Cropping** 
-        - **Masking Retina** 
-        - **Apply Black Background** 
-        - **Image Sharpening**
-        - **Resizing ke 224x224 piksel**
-        - **Penambahan Padding** 
-        """)
+    #     **Tahapan Preprocessing Citra:**
+    #     - **Cropping** 
+    #     - **Masking Retina** 
+    #     - **Apply Black Background** 
+    #     - **Image Sharpening**
+    #     - **Resizing ke 224x224 piksel**
+    #     - **Penambahan Padding** 
+    #     """)
         
     # Load model
     model = load_trained_model()
