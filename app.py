@@ -241,9 +241,9 @@ def get_severity_info(class_idx):
 def main():
     # Header
     st.markdown("""
-    <div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); padding: 6rem; border-radius: 10px; margin-bottom: 2rem;">
-        <h1 style="color: white; text-align: center; margin-bottom: 0.5rem;">👁️ Sistem Deteksi Retinopati Diabetik</h1>
-        <p style="color: white; text-align: center; opacity: 0.9;">Menggunakan Deep Learning dengan EfficientNetB0</p>
+    <div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+        <h1 style="color: white; text-align: center; margin-bottom: 0.5rem;">Sistem Deteksi Retinopati Diabetik</h1>
+        <p style="color: white; text-align: center; opacity: 0.9;"></p>
     </div>
     """, unsafe_allow_html=True)
     
