@@ -261,13 +261,13 @@ def main():
         - Output Layer (5 classes)
         
         **Tahapan Preprocessing Citra:**
-        1.  **Pengurangan Area Hitam (Cropping):** Menghilangkan area hitam di sekitar retina yang tidak relevan secara diagnostik untuk memfokuskan model.
-        2.  **Pembuatan Masker Retina & Black Background:** Memisahkan region retina dari latar belakang berdasarkan tingkat kecerahan, lalu mengganti latar belakang non-retina dengan warna hitam.
-        3.  **Peningkatan Kualitas Citra (Ben Graham Enhancement):** Menyesuaikan tingkat pencahayaan (menerangkan area gelap, meredupkan area terang) dan mempertajam detail penting seperti pembuluh darah dan bintik abnormal. Menggunakan **Gaussian Blur** dengan SigmaX=10 sebagai bagian dari proses ini.
-        4.  **Resizing ke 224x224 piksel:** Mengubah dimensi citra menjadi ukuran standar yang diperlukan oleh arsitektur EfficientNet-B0.
-        5.  **Penambahan Padding & Penyelarasan Posisi:** Menambahkan beberapa piksel padding berwarna hitam di sekitar retina untuk memastikan retina berada tepat di tengah citra. Ini penting untuk mencegah cropping yang tidak diinginkan selama augmentasi rotasi pada tahap training, sehingga struktur anatomis retina tetap terjaga.
-
-        Serangkaian preprocessing ini bertujuan menghasilkan dataset yang homogen, dengan kualitas citra optimal, dan *robust* terhadap augmentasi geometris.
+        - **Initial Resize**
+        - **Automated Cropping** (Menghilangkan area hitam di sekitar retina)
+        - **Retina Masking** (Memisahkan region retina dari background)
+        - **Apply Black Background** (Mengganti background non-retina dengan warna hitam)
+        - **Ben Graham Enhancement** (Peningkatan kualitas citra, termasuk **Gaussian Blur** dengan SigmaX=10)
+        - **Resizing ke 224x224 piksel**
+        - **Penambahan Padding & Penyelarasan Posisi** (Memastikan retina di tengah untuk augmentasi rotasi)
         """)
         
     # Load model
