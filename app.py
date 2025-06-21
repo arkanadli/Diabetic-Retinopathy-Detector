@@ -254,20 +254,19 @@ def main():
         **Arsitektur Model:**
         - Base Model: EfficientNetB0
         - Global Average Pooling
-        - **Dropout** (untuk mencegah overfitting)
-        - Dense Layer (128 units)
+        - Dropout
+        - Dense Layer
         - Batch Normalization
         - Dropout
-        - Output Layer (5 classes)
+        - Output Layer (5 kelas)
         
         **Tahapan Preprocessing Citra:**
-        - **Initial Resize**
-        - **Automated Cropping** (Menghilangkan area hitam di sekitar retina)
-        - **Retina Masking** (Memisahkan region retina dari background)
-        - **Apply Black Background** (Mengganti background non-retina dengan warna hitam)
-        - **Ben Graham Enhancement** (Peningkatan kualitas citra, termasuk **Gaussian Blur** dengan SigmaX=10)
+        - **Cropping** 
+        - **Masking Retina ** 
+        - **Apply Black Background** 
+        - **Image Sharpening**
         - **Resizing ke 224x224 piksel**
-        - **Penambahan Padding & Penyelarasan Posisi** (Memastikan retina di tengah untuk augmentasi rotasi)
+        - **Penambahan Padding ** 
         """)
         
     # Load model
