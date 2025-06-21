@@ -723,4 +723,143 @@ def main():
                         
                         # Create detailed dataframe
                         prob_data = []
-                        for i, (name, prob)
+                        for i, (name, prob) in enumerate(zip(class_names, predictions)):
+                            severity_detail = get_severity_info(i)
+                            prob_data.append({
+                                "🏷️ Diagnosis": severity_detail['name'],
+                                "📊 Probabilitas": f"{prob:.4f}",
+                                "📈 Persentase": f"{prob:.1%}",
+                                "🎯 Status": "✅ TERDETEKSI" if i == predicted_class else "❌"
+                            })
+                        
+                        import pandas as pd
+                        df = pd.DataFrame(prob_data)
+                        
+                        # Style the dataframe
+                        def highlight_prediction(row):
+                            if "✅ TERDETEKSI" in row['🎯 Status']:
+                                return ['background-color: #d4edda; color: #155724; font-weight: bold'] * len(row)
+                            return [''] * len(row)
+                        
+                        styled_df = df.style.apply(highlight_prediction, axis=1)
+                        st.dataframe(styled_df, use_container_width=True, hide_index=True)
+                        
+                        # Additional insights
+                        st.markdown("""
+                        <div class="modern-card">
+                            <h3 style="color: #495057; margin-bottom: 1rem;">🔍 Insight Analisis</h3>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            st.metric(
+                                label="🎯 Confidence Score", 
+                                value=f"{confidence:.1%}",
+                                delta=f"{'Tinggi' if confidence > 0.8 else 'Sedang' if confidence > 0.6 else 'Rendah'}"
+                            )
+                        
+                        with col2:
+                            second_highest = np.partition(predictions, -2)[-2]
+                            certainty = confidence - second_highest
+                            st.metric(
+                                label="🔒 Certainty Gap", 
+                                value=f"{certainty:.1%}",
+                                delta=f"{'Yakin' if certainty > 0.3 else 'Cukup Yakin' if certainty > 0.1 else 'Perlu Konfirmasi'}"
+                            )
+                        
+                        with col3:
+                            risk_level = "Tinggi" if predicted_class >= 3 else "Sedang" if predicted_class >= 1 else "Rendah"
+                            st.metric(
+                                label="⚡ Risk Level", 
+                                value=risk_level,
+                                delta=severity_info['short_name']
+                            )
+                        
+                    except Exception as e:
+                        st.error(f"❌ Error saat melakukan prediksi: {str(e)}")
+                        st.exception(e)
+            
+        except Exception as e:
+            st.error(f"❌ Error saat memproses gambar: {str(e)}")
+    
+    else:
+        # Landing information when no file uploaded
+        st.markdown("""
+        <div class="modern-card" style="text-align: center; padding: 3rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🏥</div>
+            <h3 style="color: #495057; margin-bottom: 1rem;">Selamat Datang di AI Retina Scanner</h3>
+            <p style="color: #6c757d; font-size: 1.1rem; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+                Teknologi AI terdepan untuk deteksi dini retinopati diabetik. 
+                Upload gambar fundus retina untuk mendapatkan analisis komprehensif dalam hitungan detik.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Feature highlights
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("""
+            <div class="modern-card" style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+                <h4 style="color: #495057;">Akurasi Tinggi</h4>
+                <p style="color: #6c757d;">Akurasi >92% dengan teknologi EfficientNetB0</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div class="modern-card" style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+                <h4 style="color: #495057;">Hasil Cepat</h4>
+                <p style="color: #6c757d;">Analisis selesai dalam hitungan detik</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div class="modern-card" style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🔬</div>
+                <h4 style="color: #495057;">5 Tingkat Diagnosis</h4>
+                <p style="color: #6c757d;">Dari normal hingga proliferatif</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Modern Footer
+    st.markdown("""
+    <div class="footer">
+        <div style="margin-bottom: 1rem;">
+            <h4 style="color: #495057; margin-bottom: 0.5rem;">⚠️ Disclaimer Medis</h4>
+            <p style="margin-bottom: 1rem;">
+                Sistem ini adalah alat bantu diagnosis dan <strong>tidak menggantikan</strong> konsultasi medis profesional.
+                Selalu konsultasikan hasil dengan dokter mata spesialis untuk diagnosis dan penanganan yang tepat.
+            </p>
+        </div>
+        
+        <hr style="border: none; height: 1px; background: rgba(102, 126, 234, 0.2); margin: 2rem 0;">
+        
+        <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; flex-wrap: wrap;">
+            <div style="text-align: center;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🤖</div>
+                <small><strong>AI Technology</strong><br>Deep Learning</small>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🏥</div>
+                <small><strong>Medical Grade</strong><br>Clinical Standard</small>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔒</div>
+                <small><strong>Secure & Private</strong><br>Data Protection</small>
+            </div>
+        </div>
+        
+        <p style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.7;">
+            © 2024 AI Retina Scanner • Powered by TensorFlow & Streamlit
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
