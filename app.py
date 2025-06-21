@@ -188,7 +188,7 @@ def load_trained_model():
 
         with st.spinner("Loading model..."):
             model = load_model(model_path, custom_objects=custom_objects, compile=False)
-        st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
+        # st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
     except Exception as e:
         st.error(f"❌ Error loading model: {str(e)}")
@@ -240,8 +240,8 @@ def get_severity_info(class_idx):
 
 def main():
     # Header
-    st.markdown(f"""
-    <div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%), url(http://googleusercontent.com/image_generation_content/0); background-size: cover; padding: 2rem; border-radius: 10px; margin-bottom: 2rem;">
+    st.markdown("""
+    <div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 10px; margin-bottom: 2rem;">
         <h1 style="color: white; text-align: center; margin-bottom: 0.5rem;">👁️ Sistem Deteksi Retinopati Diabetik</h1>
         <p style="color: white; text-align: center; opacity: 0.9;">Menggunakan Deep Learning dengan EfficientNetB0</p>
     </div>
@@ -254,20 +254,19 @@ def main():
         **Arsitektur Model:**
         - Base Model: EfficientNetB0
         - Global Average Pooling
-        - **Dropout** (untuk mencegah overfitting)
-        - Dense Layer (128 units)
+        - Dropout
+        - Dense Layer
         - Batch Normalization
         - Dropout
-        - Output Layer (5 classes)
+        - Output Layer (5 kelas)
         
         **Tahapan Preprocessing Citra:**
-        - **Initial Resize**
-        - **Automated Cropping** (Menghilangkan area hitam di sekitar retina)
-        - **Retina Masking** (Memisahkan region retina dari background)
-        - **Apply Black Background** (Mengganti background non-retina dengan warna hitam)
-        - **Ben Graham Enhancement** (Peningkatan kualitas citra, termasuk **Gaussian Blur** dengan SigmaX=10)
+        - **Cropping** 
+        - **Masking Retina** 
+        - **Apply Black Background** 
+        - **Image Sharpening**
         - **Resizing ke 224x224 piksel**
-        - **Penambahan Padding & Penyelarasan Posisi** (Memastikan retina di tengah untuk augmentasi rotasi)
+        - **Penambahan Padding** 
         """)
         
     # Load model
