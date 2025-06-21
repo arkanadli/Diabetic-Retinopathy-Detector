@@ -262,11 +262,11 @@ def main():
         
         **Tahapan Preprocessing Citra:**
         - **Cropping** 
-        - **Masking Retina ** 
+        - **Masking Retina** 
         - **Apply Black Background** 
         - **Image Sharpening**
         - **Resizing ke 224x224 piksel**
-        - **Penambahan Padding ** 
+        - **Penambahan Padding** 
         """)
         
     # Load model
