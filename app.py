@@ -188,7 +188,7 @@ def load_trained_model():
 
         with st.spinner("Loading model..."):
             model = load_model(model_path, custom_objects=custom_objects, compile=False)
-        st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
+        # st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
     except Exception as e:
         st.error(f"❌ Error loading model: {str(e)}")
