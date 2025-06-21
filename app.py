@@ -76,8 +76,8 @@ IMG_SIZE = 224
 st.set_page_config(
     page_title="AI Retina Scanner - Deteksi Retinopati Diabetik",
     page_icon="👁️",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
 # Custom CSS for modern styling
