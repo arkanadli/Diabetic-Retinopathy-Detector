@@ -354,7 +354,7 @@ def main():
             processed_img = preprocess_image_for_prediction(img_array, sigmaX=10) 
             
             # Prediction button
-            if st.button("🔍 Analisis Retinopati Diabetik", type="primary", use_container_width=True):
+            if st.button("🔍 Analisis Retinopati Diabetik", type="secondary", use_container_width=True):
                 with st.spinner("Sedang menganalisis gambar..."):
                     try:
                         predictions = predict_retinopathy(model, processed_img)
