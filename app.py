@@ -145,18 +145,23 @@ def apply_black_background(img, mask):
 def preprocess_image_for_prediction(img_array, sigmaX=10):
     """Apply all preprocessing steps to an image array."""
     img = img_array.copy()
-    img = resize_img(img, size=IMG_SIZE)
+    img = resize_img(img, size=IMG_SIZE) # Initial resize is actually done here before other steps
 
+    # Crop to remove black borders
     img = crop_all_sides(img)
+    
+    # Create retina mask and apply black background
     retina_mask = create_retina_mask(img)
+    img = apply_black_background(img, retina_mask) # Apply black background based on mask
 
+    # Ben Graham Enhancement (Gaussian Blur and addWeighted)
     blurred = cv2.GaussianBlur(img, (0, 0), sigmaX)
     img = cv2.addWeighted(img, 4.0, blurred, -4.0, 128)
 
-    img = apply_black_background(img, retina_mask)
-    img = resize_img(img, size=IMG_SIZE)
+    # Resize and pad to square
+    img = resize_img(img, size=IMG_SIZE) # Resize again after enhancement
     img = pad_to_square(img)
-    img = resize_img(img, size=IMG_SIZE)
+    img = resize_img(img, size=IMG_SIZE) # Final resize to IMG_SIZE
 
     return img
 
@@ -249,25 +254,22 @@ def main():
         **Arsitektur Model:**
         - Base Model: EfficientNetB0
         - Global Average Pooling
+        - **Dropout** (untuk mencegah overfitting)
         - Dense Layer (128 units)
         - Batch Normalization
         - Dropout
         - Output Layer (5 classes)
         
-        **Preprocessing:**
-        - **Initial Resize**
-        - **Automated Cropping (Black Borders)**
-        - **Retina Masking**
-        - **Ben Graham Enhancement**
-        - **Gaussian Blur**
-        - **Apply Masking with Black Background**
-        - **Final Resize & Padding to Square**
+        **Tahapan Preprocessing Citra:**
+        1.  **Pengurangan Area Hitam (Cropping):** Menghilangkan area hitam di sekitar retina yang tidak relevan secara diagnostik untuk memfokuskan model.
+        2.  **Pembuatan Masker Retina & Black Background:** Memisahkan region retina dari latar belakang berdasarkan tingkat kecerahan, lalu mengganti latar belakang non-retina dengan warna hitam.
+        3.  **Peningkatan Kualitas Citra (Ben Graham Enhancement):** Menyesuaikan tingkat pencahayaan (menerangkan area gelap, meredupkan area terang) dan mempertajam detail penting seperti pembuluh darah dan bintik abnormal. Menggunakan **Gaussian Blur** dengan SigmaX=10 sebagai bagian dari proses ini.
+        4.  **Resizing ke 224x224 piksel:** Mengubah dimensi citra menjadi ukuran standar yang diperlukan oleh arsitektur EfficientNet-B0.
+        5.  **Penambahan Padding & Penyelarasan Posisi:** Menambahkan beberapa piksel padding berwarna hitam di sekitar retina untuk memastikan retina berada tepat di tengah citra. Ini penting untuk mencegah cropping yang tidak diinginkan selama augmentasi rotasi pada tahap training, sehingga struktur anatomis retina tetap terjaga.
+
+        Serangkaian preprocessing ini bertujuan menghasilkan dataset yang homogen, dengan kualitas citra optimal, dan *robust* terhadap augmentasi geometris.
         """)
         
-        st.header("⚙️ Parameter")
-        sigma_x = st.slider("Sigma X (Gaussian Blur)", 5, 20, 10, 1)
-        # The 'show_steps' checkbox is already removed from the previous iteration.
-    
     # Load model
     model = load_trained_model()
     
@@ -295,7 +297,7 @@ def main():
             except Exception as e:
                 st.error(f"Error saving or reloading model: {str(e)}")
                 st.exception(e)
-        
+            
         return
     
     # File uploader
@@ -324,7 +326,8 @@ def main():
             st.image(img_array, caption="Gambar yang diupload", use_column_width=True)
             
             # Preprocessing (happens internally without display)
-            processed_img = preprocess_image_for_prediction(img_array, sigma_x)
+            # The sigmaX value is now fixed at 10 within the preprocess_image_for_prediction function
+            processed_img = preprocess_image_for_prediction(img_array, sigmaX=10) 
             
             # Prediction button
             if st.button("🔍 Analisis Retinopati Diabetik", type="primary"):
