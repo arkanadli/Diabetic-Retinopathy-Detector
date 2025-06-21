@@ -88,6 +88,54 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- Custom CSS for dark theme adjustments ---
+st.markdown("""
+<style>
+/* Adjust spinner color */
+.stSpinner > div > div {
+    border-top-color: #667eea; /* A color from your header gradient */
+}
+
+/* Adjust text color in warnings/errors for better visibility on dark background */
+.stAlert > div {
+    color: #fff; /* White text for alerts */
+}
+
+/* General text color for Streamlit's default elements if not explicitly set */
+body {
+    color: #f0f2f6; /* Lighter text for overall readability */
+}
+
+/* Adjust the styling of the file uploader for dark theme */
+.stFileUploader > label {
+    color: #f0f2f6 !important;
+}
+.stFileUploader div[data-testid="stFileUploaderDropzone"] {
+    background-color: #262730; /* Darker background for dropzone */
+    border-color: #667eea; /* Border color matching theme */
+    color: #f0f2f6;
+}
+.stFileUploader div[data-testid="stFileUploaderFileName"] {
+    color: #f0f2f6;
+}
+
+/* Make dataframe background fit dark theme */
+.stDataFrame {
+    background-color: #262730; /* Dark background for dataframes */
+    color: #f0f2f6; /* Light text for dataframes */
+}
+.stDataFrame thead tr th {
+    background-color: #31333F; /* Darker header for dataframes */
+    color: #f0f2f6;
+}
+.stDataFrame tbody tr td {
+    color: #f0f2f6;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
 # --- Preprocessing functions ---
 
 def crop_all_sides(img, tol=7):
@@ -247,28 +295,6 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # # Sidebar
-    # with st.sidebar:
-    #     st.header("📊 Informasi Model")
-    #     st.markdown("""
-    #     **Arsitektur Model:**
-    #     - Base Model: EfficientNetB0
-    #     - Global Average Pooling
-    #     - Dropout
-    #     - Dense Layer
-    #     - Batch Normalization
-    #     - Dropout
-    #     - Output Layer (5 kelas)
-        
-    #     **Tahapan Preprocessing Citra:**
-    #     - **Cropping** 
-    #     - **Masking Retina** 
-    #     - **Apply Black Background** 
-    #     - **Image Sharpening**
-    #     - **Resizing ke 224x224 piksel**
-    #     - **Penambahan Padding** 
-    #     """)
-        
     # Load model
     model = load_trained_model()
     
@@ -322,10 +348,9 @@ def main():
             
             # Display only the original image
             st.subheader("🖼️ Gambar Original")
-            st.image(img_array, caption="Gambar yang diupload", use_column_width=True)
+            st.image(img_array, caption="Gambar yang diupload", width=300) # Set a fixed width
             
             # Preprocessing (happens internally without display)
-            # The sigmaX value is now fixed at 10 within the preprocess_image_for_prediction function
             processed_img = preprocess_image_for_prediction(img_array, sigmaX=10) 
             
             # Prediction button
@@ -373,7 +398,21 @@ def main():
                         
                         # Bar chart
                         fig, ax = plt.subplots(figsize=(10, 6))
-                        bars = ax.bar(class_names, predictions)
+                        
+                        # Set plot background and text colors for dark theme
+                        fig.patch.set_facecolor('None') # Make figure background transparent
+                        ax.set_facecolor('None') # Make axes background transparent
+                        ax.tick_params(axis='x', colors='white') # X-axis labels
+                        ax.tick_params(axis='y', colors='white') # Y-axis labels
+                        ax.xaxis.label.set_color('white') # X-axis title
+                        ax.yaxis.label.set_color('white') # Y-axis title
+                        ax.title.set_color('white') # Plot title
+                        ax.spines['left'].set_color('white') # Y-axis line
+                        ax.spines['bottom'].set_color('white') # X-axis line
+                        ax.spines['right'].set_color('None') # Remove right spine
+                        ax.spines['top'].set_color('None') # Remove top spine
+                        
+                        bars = ax.bar(class_names, predictions, color='#444444') # Default bar color for dark theme
                         
                         # Highlight predicted class
                         bars[predicted_class].set_color(severity_info['color'])
@@ -382,10 +421,10 @@ def main():
                         ax.set_title('Distribusi Probabilitas Tingkat Keparahan')
                         ax.set_ylim(0, 1)
                         
-                        # Add percentage labels on bars
+                        # Add percentage labels on bars, set color to white
                         for i, (bar, prob) in enumerate(zip(bars, predictions)):
                             ax.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
-                                    f'{prob:.1%}', ha='center', va='bottom')
+                                    f'{prob:.1%}', ha='center', va='bottom', color='white')
                         
                         plt.xticks(rotation=45, ha='right')
                         plt.tight_layout()
