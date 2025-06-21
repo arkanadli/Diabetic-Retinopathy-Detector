@@ -348,7 +348,7 @@ def main():
             
             # Display only the original image
             st.subheader("🖼️ Gambar Original")
-            st.image(img_array, caption="Gambar yang diupload", use_column_width=True) # Set a fixed width
+            st.image(img_array, caption="Gambar yang diupload", use_container_width=True) # Set a fixed width
             
             # Preprocessing (happens internally without display)
             processed_img = preprocess_image_for_prediction(img_array, sigmaX=10) 
