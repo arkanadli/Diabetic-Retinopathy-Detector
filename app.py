@@ -1,3 +1,4 @@
+
 import streamlit as st
 import cv2
 import numpy as np
@@ -84,7 +85,7 @@ IMG_SIZE = 224
 
 # Page configuration
 st.set_page_config(
-    page_title="AI Diabetic Retinopathy Detection",
+    page_title="Deteksi Retinopati Diabetik AI",
     page_icon="👁️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -493,11 +494,11 @@ def load_trained_model():
             'DTypePolicy': DummyDTypePolicy 
         }
 
-        with st.spinner("🤖 Loading AI model..."):
+        with st.spinner("🤖 Memuat model AI..."): # Translated
             model = load_model(model_path, custom_objects=custom_objects, compile=False)
         return model
     except Exception as e:
-        st.error(f"❌ Error loading model: {str(e)}")
+        st.error(f"❌ Error saat memuat model: {str(e)}") # Translated
         return None
 
 def predict_retinopathy(model, processed_img):
@@ -511,48 +512,48 @@ def get_severity_info(class_idx):
     """Get information about each severity level"""
     severity_info = {
         0: {
-            "name": "No DR",
-            "full_name": "No Diabetic Retinopathy",
-            "description": "No signs of diabetic retinopathy detected. The retina appears healthy.",
+            "name": "Tanpa DR", # Translated
+            "full_name": "Tanpa Retinopati Diabetik", # Translated
+            "description": "Tidak ada tanda-tanda retinopati diabetik terdeteksi. Retina tampak sehat.", # Translated
             "color": "#00d4aa",
-            "recommendation": "Maintain good blood sugar control and continue regular eye checkups.",
-            "urgency": "Low",
+            "recommendation": "Pertahankan kontrol gula darah yang baik dan lanjutkan pemeriksaan mata rutin.", # Translated
+            "urgency": "Rendah", # Translated
             "icon": "✅"
         },
         1: {
-            "name": "Mild DR",
-            "full_name": "Mild Diabetic Retinopathy",
-            "description": "Microaneurysms are present in the retina. Early stage of diabetic retinopathy.",
+            "name": "DR Ringan", # Translated
+            "full_name": "Retinopati Diabetik Ringan", # Translated
+            "description": "Mikroaneurisma ditemukan di retina. Tahap awal retinopati diabetik.", # Translated
             "color": "#ffc107",
-            "recommendation": "Consult with an eye doctor and maintain stricter blood sugar control.",
-            "urgency": "Medium",
+            "recommendation": "Konsultasikan dengan dokter mata dan pertahankan kontrol gula darah yang lebih ketat.", # Translated
+            "urgency": "Sedang", # Translated
             "icon": "⚠️"
         },
         2: {
-            "name": "Moderate DR",
-            "full_name": "Moderate Diabetic Retinopathy",
-            "description": "Microaneurysms, hemorrhages, and hard exudates are present.",
+            "name": "DR Sedang", # Translated
+            "full_name": "Retinopati Diabetik Sedang", # Translated
+            "description": "Mikroaneurisma, pendarahan, dan eksudat keras ditemukan.", # Translated
             "color": "#fd7e14",
-            "recommendation": "Consult with a retinal specialist promptly for further evaluation.",
-            "urgency": "Medium-High",
+            "recommendation": "Segera konsultasikan dengan spesialis retina untuk evaluasi lebih lanjut.", # Translated
+            "urgency": "Sedang-Tinggi", # Translated
             "icon": "🔶"
         },
         3: {
-            "name": "Severe DR",
-            "full_name": "Severe Diabetic Retinopathy",
-            "description": "Extensive retinal hemorrhages and cotton wool spots are present.",
+            "name": "DR Berat", # Translated
+            "full_name": "Retinopati Diabetik Berat", # Translated
+            "description": "Pendarahan retina ekstensif dan bintik kapas ditemukan.", # Translated
             "color": "#dc3545",
-            "recommendation": "URGENT: Consult with a retinal specialist immediately for intensive treatment.",
-            "urgency": "High",
+            "recommendation": "URGENT: Segera konsultasikan dengan spesialis retina untuk perawatan intensif.", # Translated
+            "urgency": "Tinggi", # Translated
             "icon": "🚨"
         },
         4: {
-            "name": "Proliferative DR",
-            "full_name": "Proliferative Diabetic Retinopathy",
-            "description": "Neovascularization is present with high risk of vision loss.",
+            "name": "DR Proliferatif", # Translated
+            "full_name": "Retinopati Diabetik Proliferatif", # Translated
+            "description": "Neovaskularisasi ditemukan dengan risiko tinggi kehilangan penglihatan.", # Translated
             "color": "#6f42c1",
-            "recommendation": "EMERGENCY: Immediate consultation with retinal specialist. Laser therapy or surgery may be required.",
-            "urgency": "Critical",
+            "recommendation": "DARURAT: Konsultasi segera dengan spesialis retina. Terapi laser atau operasi mungkin diperlukan.", # Translated
+            "urgency": "Kritis", # Translated
             "icon": "🆘"
         }
     }
@@ -571,14 +572,14 @@ def create_probability_chart(predictions, class_names, predicted_class):
             marker_color=colors,
             text=[f'{p:.1%}' for p in predictions],
             textposition='auto',
-            hovertemplate='<b>%{x}</b><br>Probability: %{y:.1%}<extra></extra>'
+            hovertemplate='<b>%{x}</b><br>Probabilitas: %{y:.1%}<extra></extra>' # Translated
         )
     ])
     
     fig.update_layout(
-        title="Prediction Probability Distribution",
-        xaxis_title="Severity Level",
-        yaxis_title="Probability",
+        title="Distribusi Probabilitas Prediksi", # Translated
+        xaxis_title="Tingkat Keparahan", # Translated
+        yaxis_title="Probabilitas", # Translated
         template="plotly_dark",
         showlegend=False,
         height=400,
@@ -593,22 +594,16 @@ def display_info_section():
     """Display information about diabetic retinopathy"""
     st.markdown("""
     <div class="info-card">
-        <h3>🔬 About Diabetic Retinopathy</h3>
-        <p>Diabetic retinopathy is a diabetes complication that affects the eyes. It's caused by damage to the blood vessels of the light-sensitive tissue at the back of the eye (retina).</p>
-        
-        <div class="stat-container">
+        <h3>🔬 Tentang Retinopati Diabetik</h3> <p>Retinopati diabetik adalah komplikasi diabetes yang memengaruhi mata. Ini disebabkan oleh kerusakan pembuluh darah pada jaringan peka cahaya di bagian belakang mata (retina).</p> <div class="stat-container">
             <div class="stat-card">
                 <div class="stat-value">285M</div>
-                <div class="stat-label">People with diabetes worldwide</div>
-            </div>
+                <div class="stat-label">Orang dengan diabetes di seluruh dunia</div> </div>
             <div class="stat-card">
                 <div class="stat-value">93M</div>
-                <div class="stat-label">People with diabetic retinopathy</div>
-            </div>
+                <div class="stat-label">Orang dengan retinopati diabetik</div> </div>
             <div class="stat-card">
                 <div class="stat-value">AI</div>
-                <div class="stat-label">Powered detection system</div>
-            </div>
+                <div class="stat-label">Sistem deteksi bertenaga</div> </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -616,37 +611,28 @@ def display_info_section():
 def display_sidebar():
     """Display sidebar with information and tips"""
     with st.sidebar:
-        st.markdown("## 📊 Model Information")
+        st.markdown("## 📊 Informasi Model") # Translated
         st.markdown("""
         <div class="sidebar-content">
-            <h4>🤖 AI Model Details</h4>
-            <ul>
-                <li><strong>Architecture:</strong> EfficientNetB0</li>
-                <li><strong>Input Size:</strong> 224x224 pixels</li>
-                <li><strong>Classes:</strong> 5 severity levels</li>
-                <li><strong>Training:</strong> Medical grade dataset</li>
-            </ul>
+            <h4>🤖 Detail Model AI</h4> <ul>
+                <li><strong>Arsitektur:</strong> EfficientNetB0</li>
+                <li><strong>Ukuran Input:</strong> 224x224 piksel</li>
+                <li><strong>Kelas:</strong> 5 tingkat keparahan</li> <li><strong>Pelatihan:</strong> Dataset kelas medis</li> </ul>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("## 💡 Tips for Better Results")
+        st.markdown("## 💡 Tips untuk Hasil yang Lebih Baik") # Translated
         st.markdown("""
         <div class="sidebar-content">
-            <h4>📸 Image Guidelines</h4>
-            <ul>
-                <li>Use high-quality fundus images</li>
-                <li>Ensure proper lighting and focus</li>
-                <li>Avoid blurry or low-resolution images</li>
-                <li>Center the optic disc and macula</li>
-            </ul>
+            <h4>📸 Panduan Gambar</h4> <ul>
+                <li>Gunakan gambar fundus berkualitas tinggi</li> <li>Pastikan pencahayaan dan fokus yang tepat</li> <li>Hindari gambar yang buram atau resolusi rendah</li> <li>Pusatkan diskus optik dan makula</li> </ul>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("## ⚠️ Important Notice")
+        st.markdown("## ⚠️ Pemberitahuan Penting") # Translated
         st.markdown("""
         <div class="sidebar-content">
-            <p><strong>Medical Disclaimer:</strong> This AI system is designed as a screening tool and should not replace professional medical diagnosis. Always consult with qualified healthcare professionals for medical advice.</p>
-        </div>
+            <p><strong>Pernyataan Medis:</strong> Sistem AI ini dirancang sebagai alat skrining dan tidak boleh menggantikan diagnosis medis profesional. Selalu konsultasikan dengan profesional perawatan kesehatan yang berkualifikasi untuk nasihat medis.</p> </div>
         """, unsafe_allow_html=True)
 
 def main():
@@ -656,9 +642,7 @@ def main():
     # Hero header
     st.markdown("""
     <div class="hero-header">
-        <h1 class="hero-title">🔬 AI-Powered Diabetic Retinopathy Detection</h1>
-        <p class="hero-subtitle">Advanced machine learning system for early detection and classification of diabetic retinopathy severity</p>
-    </div>
+        <h1 class="hero-title">🔬 Deteksi Retinopati Diabetik Berbasis AI</h1> <p class="hero-subtitle">Sistem pembelajaran mesin canggih untuk deteksi dini dan klasifikasi tingkat keparahan retinopati diabetik</p> </div>
     """, unsafe_allow_html=True)
     
     # Information section
@@ -670,15 +654,13 @@ def main():
     if model is None:
         st.markdown("""
         <div class="info-card">
-            <h3>⚠️ Model Not Found</h3>
-            <p>The AI model file 'BestModel.h5' was not found. Please upload the model file to continue.</p>
-        </div>
+            <h3>⚠️ Model Tidak Ditemukan</h3> <p>File model AI 'BestModel.h5' tidak ditemukan. Harap unggah file model untuk melanjutkan.</p> </div>
         """, unsafe_allow_html=True)
         
         uploaded_model = st.file_uploader(
-            "📤 Upload Model File (BestModel.h5)", 
+            "📤 Unggah File Model (BestModel.h5)", # Translated
             type=['h5'], 
-            help="Upload the trained model file"
+            help="Unggah file model yang telah dilatih" # Translated
         )
         
         if uploaded_model is not None:
@@ -689,22 +671,24 @@ def main():
                 
                 model = load_trained_model()
                 if model is not None:
-                    st.success("✅ Model loaded successfully!")
+                    st.success("✅ Model berhasil dimuat!") # Translated
                     st.rerun()
+                else:
+                    st.error("Gagal memuat model setelah mengunggah. Periksa kembali file.") # Added specific error for clarity
             except Exception as e:
-                st.error(f"❌ Error loading model: {str(e)}")
+                st.error(f"❌ Error saat memuat model: {str(e)}") # Translated
         return
     
     # Main content area
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.markdown("## 📁 Upload Fundus Image")
+        st.markdown("## 📁 Unggah Gambar Fundus") # Translated
         
         uploaded_file = st.file_uploader(
-            "Choose a fundus retina image",
+            "Pilih gambar retina fundus", # Translated
             type=['png', 'jpg', 'jpeg'],
-            help="Upload a high-quality fundus image for analysis"
+            help="Unggah gambar fundus berkualitas tinggi untuk analisis" # Translated
         )
         
         if uploaded_file is not None:
@@ -722,15 +706,15 @@ def main():
                     img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
                 
                 # Display original image
-                st.markdown("### 🖼️ Original Image")
-                st.image(img_array, caption="Uploaded fundus image", use_column_width=True)
+                st.markdown("### 🖼️ Gambar Asli") # Translated
+                st.image(img_array, caption="Gambar fundus yang diunggah", use_column_width=True) # Translated
                 
                 # Preprocessing
                 processed_img = preprocess_image_for_prediction(img_array, sigmaX=10)
                 
                 # Analysis button
-                if st.button("🔍 Analyze Image", type="primary", use_container_width=True):
-                    with st.spinner("🤖 AI is analyzing the image..."):
+                if st.button("🔍 Analisis Gambar", type="primary", use_container_width=True): # Translated
+                    with st.spinner("🤖 AI sedang menganalisis gambar..."): # Translated
                         try:
                             predictions = predict_retinopathy(model, processed_img)
                             predicted_class = np.argmax(predictions)
@@ -740,7 +724,7 @@ def main():
                             severity_info = get_severity_info(predicted_class)
                             
                             st.markdown("---")
-                            st.markdown("## 📋 Analysis Results")
+                            st.markdown("## 📋 Hasil Analisis") # Translated
                             
                             # Main result card
                             st.markdown(f"""
@@ -751,50 +735,48 @@ def main():
                                 <h3 style="color: {severity_info['color']};">{severity_info['full_name']}</h3>
                                 <p>{severity_info['description']}</p>
                                 <div class="confidence-score" style="color: {severity_info['color']};">
-                                    {confidence:.1%} Confidence
+                                    {confidence:.1%} Keyakinan
                                 </div>
-                                <p><strong>Urgency Level:</strong> {severity_info['urgency']}</p>
-                            </div>
+                                <p><strong>Tingkat Urgensi:</strong> {severity_info['urgency']}</p> </div>
                             """, unsafe_allow_html=True)
                             
                             # Recommendation card
                             st.markdown(f"""
                             <div class="recommendation-card">
-                                <h4>💡 Medical Recommendation</h4>
-                                <p>{severity_info['recommendation']}</p>
+                                <h4>💡 Rekomendasi Medis</h4> <p>{severity_info['recommendation']}</p>
                             </div>
                             """, unsafe_allow_html=True)
                             
                             # Probability chart
-                            st.markdown("### 📊 Detailed Probability Analysis")
+                            st.markdown("### 📊 Analisis Probabilitas Terperinci") # Translated
                             
-                            class_names = ["No DR", "Mild DR", "Moderate DR", "Severe DR", "Proliferative DR"]
+                            class_names = ["Tanpa DR", "DR Ringan", "DR Sedang", "DR Berat", "DR Proliferatif"] # Translated
                             fig = create_probability_chart(predictions, class_names, predicted_class)
                             st.plotly_chart(fig, use_container_width=True)
                             
                             # Detailed probability table
-                            st.markdown("### 📈 Probability Breakdown")
+                            st.markdown("### 📈 Rincian Probabilitas") # Translated
                             prob_data = []
                             for i, (name, prob) in enumerate(zip(class_names, predictions)):
                                 severity_info_item = get_severity_info(i)
                                 prob_data.append({
-                                    "Severity Level": f"{severity_info_item['icon']} {name}",
-                                    "Probability": f"{prob:.4f}",
-                                    "Percentage": f"{prob:.1%}",
-                                    "Urgency": severity_info_item['urgency']
+                                    "Tingkat Keparahan": f"{severity_info_item['icon']} {name}", # Translated
+                                    "Probabilitas": f"{prob:.4f}", # Translated
+                                    "Persentase": f"{prob:.1%}", # Translated
+                                    "Urgensi": severity_info_item['urgency'] # Translated
                                 })
                             
                             st.dataframe(prob_data, use_container_width=True, hide_index=True)
                             
                         except Exception as e:
-                            st.error(f"❌ Error during analysis: {str(e)}")
+                            st.error(f"❌ Error selama analisis: {str(e)}") # Translated
                             st.exception(e)
                             
             except Exception as e:
-                st.error(f"❌ Error processing image: {str(e)}")
+                st.error(f"❌ Error saat memproses gambar: {str(e)}") # Translated
     
     with col2:
-        st.markdown("## 🎯 Severity Levels")
+        st.markdown("## 🎯 Tingkat Keparahan") # Translated
         
         # Display severity level information
         for i in range(5):
@@ -803,7 +785,7 @@ def main():
             <div class="info-card" style="border-left: 4px solid {severity_info['color']};">
                 <h4 style="color: {severity_info['color']};">{severity_info['icon']} {severity_info['name']}</h4>
                 <p style="font-size: 0.9rem;">{severity_info['description']}</p>
-                <p style="font-size: 0.8rem; color: #888;"><strong>Urgency:</strong> {severity_info['urgency']}</p>
+                <p style="font-size: 0.8rem; color: #888;"><strong>Urgensi:</strong> {severity_info['urgency']}</p>
             </div>
             """, unsafe_allow_html=True)
     
@@ -811,53 +793,30 @@ def main():
     st.markdown("---")
     
     # Create tabs for additional information
-    tab1, tab2, tab3, tab4 = st.tabs(["📚 About DR", "🔬 How It Works", "📊 Statistics", "❓ FAQ"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📚 Tentang DR", "🔬 Cara Kerja", "📊 Statistik", "❓ FAQ"]) # Translated
     
     with tab1:
         st.markdown("""
         <div class="info-card">
-            <h3>🔬 Understanding Diabetic Retinopathy</h3>
-            <p>Diabetic retinopathy is a serious eye condition that can develop in people with diabetes. It occurs when high blood sugar levels damage the blood vessels in the retina, the light-sensitive tissue at the back of the eye.</p>
+            <h3>🔬 Memahami Retinopati Diabetik</h3> <p>Retinopati diabetik adalah kondisi mata serius yang dapat berkembang pada penderita diabetes. Ini terjadi ketika kadar gula darah tinggi merusak pembuluh darah di retina, jaringan peka cahaya di bagian belakang mata.</p> <h4>🎯 Fakta Kunci:</h4> <ul>
+                <li><strong>Penyebab utama</strong> kebutaan pada orang dewasa usia produktif</li> <li><strong>Kondisi progresif</strong> yang memburuk seiring waktu tanpa perawatan</li> <li><strong>Seringkali tanpa gejala</strong> pada tahap awal</li> <li><strong>Dapat dicegah</strong> dengan pengelolaan diabetes yang tepat dan skrining rutin</li> </ul>
             
-            <h4>🎯 Key Facts:</h4>
-            <ul>
-                <li><strong>Leading cause</strong> of blindness in working-age adults</li>
-                <li><strong>Progressive condition</strong> that worsens over time without treatment</li>
-                <li><strong>Often asymptomatic</strong> in early stages</li>
-                <li><strong>Preventable</strong> with proper diabetes management and regular screening</li>
-            </ul>
-            
-            <h4>⚠️ Risk Factors:</h4>
-            <ul>
-                <li>Poor blood sugar control</li>
-                <li>High blood pressure</li>
-                <li>High cholesterol</li>
-                <li>Duration of diabetes</li>
-                <li>Pregnancy</li>
-                <li>Smoking</li>
-            </ul>
+            <h4>⚠️ Faktor Risiko:</h4> <ul>
+                <li>Kontrol gula darah yang buruk</li> <li>Tekanan darah tinggi</li> <li>Kolesterol tinggi</li> <li>Durasi diabetes</li> <li>Kehamilan</li> <li>Merokok</li> </ul>
         </div>
         """, unsafe_allow_html=True)
     
     with tab2:
         st.markdown("""
         <div class="info-card">
-            <h3>🤖 AI Detection System</h3>
-            <p>Our AI system uses advanced deep learning techniques to analyze fundus images and detect diabetic retinopathy with high accuracy.</p>
+            <h3>🤖 Sistem Deteksi AI</h3> <p>Sistem AI kami menggunakan teknik deep learning canggih untuk menganalisis gambar fundus dan mendeteksi retinopati diabetik dengan akurasi tinggi.</p> <h4>🔄 Alur Pemrosesan:</h4> <ol>
+                <li><strong>Pra-pemrosesan Gambar:</strong> Pemotongan, pengubahan ukuran, dan peningkatan gambar</li> <li><strong>Ekstraksi Fitur:</strong> Jaringan saraf konvolusional EfficientNetB0</li>
+                <li><strong>Klasifikasi:</strong> Prediksi 5 kelas keparahan</li> <li><strong>Penilaian Keyakinan:</strong> Penilaian probabilitas untuk setiap kelas</li> </ol>
             
-            <h4>🔄 Processing Pipeline:</h4>
-            <ol>
-                <li><strong>Image Preprocessing:</strong> Cropping, resizing, and enhancement</li>
-                <li><strong>Feature Extraction:</strong> EfficientNetB0 convolutional neural network</li>
-                <li><strong>Classification:</strong> 5-class severity prediction</li>
-                <li><strong>Confidence Scoring:</strong> Probability assessment for each class</li>
-            </ol>
-            
-            <h4>🎯 Model Performance:</h4>
-            <div class="stat-container">
+            <h4>🎯 Performa Model:</h4> <div class="stat-container">
                 <div class="stat-card">
                     <div class="stat-value">95%</div>
-                    <div class="stat-label">Accuracy</div>
+                    <div class="stat-label">Akurasi</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">0.94</div>
@@ -874,88 +833,46 @@ def main():
     with tab3:
         st.markdown("""
         <div class="info-card">
-            <h3>📊 Global Impact Statistics</h3>
-            
-            <div class="stat-container">
+            <h3>📊 Statistik Dampak Global</h3> <div class="stat-container">
                 <div class="stat-card">
                     <div class="stat-value">537M</div>
-                    <div class="stat-label">Adults with diabetes (2021)</div>
-                </div>
+                    <div class="stat-label">Orang dewasa dengan diabetes (2021)</div> </div>
                 <div class="stat-card">
                     <div class="stat-value">93M</div>
-                    <div class="stat-label">People with diabetic retinopathy</div>
-                </div>
+                    <div class="stat-label">Orang dengan retinopati diabetik</div> </div>
                 <div class="stat-card">
                     <div class="stat-value">28M</div>
-                    <div class="stat-label">Vision-threatening DR cases</div>
-                </div>
+                    <div class="stat-label">Kasus DR yang mengancam penglihatan</div> </div>
                 <div class="stat-card">
                     <div class="stat-value">4.8M</div>
-                    <div class="stat-label">Blindness cases from DR</div>
-                </div>
+                    <div class="stat-label">Kasus kebutaan akibat DR</div> </div>
             </div>
             
-            <h4>🌍 Regional Distribution:</h4>
-            <ul>
-                <li><strong>Asia-Pacific:</strong> Highest prevalence (60% of global cases)</li>
-                <li><strong>Europe:</strong> 25% of global cases</li>
-                <li><strong>North America:</strong> 10% of global cases</li>
-                <li><strong>Other regions:</strong> 5% of global cases</li>
-            </ul>
+            <h4>🌍 Distribusi Regional:</h4> <ul>
+                <li><strong>Asia-Pasifik:</strong> Prevalensi tertinggi (60% dari kasus global)</li> <li><strong>Eropa:</strong> 25% dari kasus global</li> <li><strong>Amerika Utara:</strong> 10% dari kasus global</li> <li><strong>Wilayah lain:</strong> 5% dari kasus global</li> </ul>
             
-            <h4>📈 Screening Benefits:</h4>
-            <ul>
-                <li><strong>Early detection</strong> can prevent 95% of severe vision loss</li>
-                <li><strong>Regular screening</strong> reduces blindness risk by 60%</li>
-                <li><strong>AI-assisted screening</strong> improves accessibility and accuracy</li>
-            </ul>
+            <h4>📈 Manfaat Skrining:</h4> <ul>
+                <li><strong>Deteksi dini</strong> dapat mencegah 95% kehilangan penglihatan yang parah</li> <li><strong>Skrining rutin</strong> mengurangi risiko kebutaan sebesar 60%</li> <li><strong>Skrining berbantuan AI</strong> meningkatkan aksesibilitas dan akurasi</li> </ul>
         </div>
         """, unsafe_allow_html=True)
     
     with tab4:
         st.markdown("""
         <div class="info-card">
-            <h3>❓ Frequently Asked Questions</h3>
+            <h3>❓ Pertanyaan yang Sering Diajukan</h3> <h4>🔍 Seberapa akurat sistem AI ini?</h4> <p>Sistem AI kami mencapai akurasi 95% dalam mendeteksi tingkat keparahan retinopati diabetik. Namun, ini harus digunakan sebagai alat skrining dan tidak menggantikan diagnosis medis profesional.</p> <h4>📸 Jenis gambar apa yang paling baik?</h4> <p>Gambar fundus berkualitas tinggi dengan visibilitas yang jelas dari diskus optik dan makula adalah yang terbaik. Gambar harus terang, fokus, dan terpusat dengan baik.</p> <h4>⏱️ Berapa lama waktu analisis?</h4> <p>Analisis AI biasanya membutuhkan waktu 5-10 detik, tergantung pada ukuran gambar dan performa sistem.</p> <h4>🔒 Apakah data saya aman?</h4> <p>Ya, gambar yang diunggah diproses secara lokal dan tidak disimpan secara permanen. Privasi dan keamanan data Anda adalah prioritas utama kami.</p> <h4>🏥 Kapan saya harus menemui dokter?</h4> <p>Anda harus berkonsultasi dengan profesional perawatan mata jika:</p> <ul>
+                <li>AI mendeteksi tingkat retinopati diabetik apa pun</li> <li>Anda mengalami perubahan penglihatan</li> <li>Anda menderita diabetes dan belum pernah memeriksakan mata dalam setahun terakhir</li> <li>Anda memiliki pertanyaan tentang kesehatan mata Anda</li> </ul>
             
-            <h4>🔍 How accurate is this AI system?</h4>
-            <p>Our AI system achieves 95% accuracy in detecting diabetic retinopathy severity levels. However, it should be used as a screening tool and not replace professional medical diagnosis.</p>
-            
-            <h4>📸 What type of images work best?</h4>
-            <p>High-quality fundus images with clear visibility of the optic disc and macula work best. The image should be well-lit, focused, and properly centered.</p>
-            
-            <h4>⏱️ How long does analysis take?</h4>
-            <p>The AI analysis typically takes 5-10 seconds, depending on image size and system performance.</p>
-            
-            <h4>🔒 Is my data secure?</h4>
-            <p>Yes, uploaded images are processed locally and are not stored permanently. Your privacy and data security are our top priorities.</p>
-            
-            <h4>🏥 When should I see a doctor?</h4>
-            <p>You should consult an eye care professional if:</p>
-            <ul>
-                <li>The AI detects any level of diabetic retinopathy</li>
-                <li>You experience vision changes</li>
-                <li>You have diabetes and haven't had an eye exam in the past year</li>
-                <li>You have questions about your eye health</li>
-            </ul>
-            
-            <h4>💊 Can diabetic retinopathy be treated?</h4>
-            <p>Yes, early-stage diabetic retinopathy can be managed with proper blood sugar control. Advanced stages may require laser treatment, injections, or surgery.</p>
-        </div>
+            <h4>💊 Bisakah retinopati diabetik diobati?</h4> <p>Ya, retinopati diabetik tahap awal dapat dikelola dengan kontrol gula darah yang tepat. Tahap lanjut mungkin memerlukan terapi laser, suntikan, atau operasi.</p> </div>
         """, unsafe_allow_html=True)
     
     # Footer
     st.markdown("---")
     st.markdown("""
     <div class="footer">
-        <h4>⚠️ Important Medical Disclaimer</h4>
-        <p>This AI system is designed as a screening and educational tool. It is not intended to diagnose, treat, cure, or prevent any disease. The results should not replace professional medical advice, diagnosis, or treatment.</p>
-        <p><strong>Always consult with qualified healthcare professionals for medical advice and treatment decisions.</strong></p>
-        
-        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <h4>⚠️ Pernyataan Medis Penting</h4> <p>Sistem AI ini dirancang sebagai alat skrining dan edukasi. Ini tidak dimaksudkan untuk mendiagnosis, mengobati, menyembuhkan, atau mencegah penyakit apa pun. Hasilnya tidak boleh menggantikan nasihat, diagnosis, atau perawatan medis profesional.</p> <p><strong>Selalu konsultasikan dengan profesional perawatan kesehatan yang berkualifikasi untuk nasihat medis dan keputusan perawatan.</strong></p> <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
             <p style="font-size: 0.9rem; color: var(--text-secondary);">
-                🤖 Powered by Advanced AI | 🔬 Medical Grade Analysis | 🌐 Accessible Healthcare Technology
-            </p>
-        </div>
+                🤖 Didukung oleh AI Canggih | 🔬 Analisis Kelas Medis | 🌐 Teknologi Kesehatan yang Dapat Diakses
+            </p> </div>
     </div>
     """, unsafe_allow_html=True)
 
