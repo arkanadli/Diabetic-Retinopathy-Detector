@@ -661,7 +661,11 @@ def main():
     # Hero header
     st.markdown("""
     <div class="hero-header">
-        <h1 class="hero-title">🔬 Deteksi Retinopati Diabetik Berbasis AI</h1> <p class="hero-subtitle">Sistem pembelajaran mesin canggih untuk deteksi dini dan klasifikasi tingkat keparahan retinopati diabetik</p> </div>
+        <h1 class="hero-title">🔬 Deteksi Retinopati Diabetik Berbasis AI</h1> <p class="hero-subtitle">Sistem pembelajaran mesin canggih untuk deteksi dini dan klasifikasi tingkat keparahan retinopati diabetik</p> <p class="hero-subtitle" style="font-size: 0.9rem; margin-top: 1rem;">
+            Sebuah Proyek Penelitian oleh <strong>Muhammad Arkan Adli</strong><br>
+            Teknik Informatika - ITENAS Bandung
+        </p>
+    </div>
     """, unsafe_allow_html=True)
     
     # Information section
