@@ -798,10 +798,8 @@ def main():
         st.markdown("""
         <div class="info-card">
             <h3>🔬 Memahami Retinopati Diabetik</h3> <p>Retinopati diabetik adalah kondisi mata serius yang dapat berkembang pada penderita diabetes. Ini terjadi ketika kadar gula darah tinggi merusak pembuluh darah di retina, jaringan peka cahaya di bagian belakang mata.</p> <h4>🎯 Fakta Kunci:</h4> <ul>
-                <li><strong>Penyebab utama</strong> kebutaan pada orang dewasa usia produktif</li> <li><strong>Kondisi progresif</strong> yang memburuk seiring waktu tanpa perawatan</li> <li><strong>Seringkali tanpa gejala</strong> pada tahap awal</li> <li><strong>Dapat dicegah</strong> dengan pengelolaan diabetes yang tepat dan skrining rutin</li> </ul>
-            
-            <h3>🔬 Memahami Retinopati Diabetik</h3> <p>Retinopati diabetik adalah kondisi mata serius yang dapat berkembang pada penderita diabetes. Ini terjadi ketika kadar gula darah tinggi merusak pembuluh darah di retina, jaringan peka cahaya di bagian belakang mata.</p> <h4>🎯 Fakta Kunci:</h4> <ul>
-                <li><strong>Penyebab utama</strong> kebutaan pada orang dewasa usia produktif</li> <li><strong>Kondisi progresif</strong> yang memburuk seiring waktu tanpa perawatan</li> <li><strong>Seringkali tanpa gejala</strong> pada tahap awal</li> <li><strong>Dapat dicegah</strong> dengan pengelolaan diabetes yang tepat dan skrining rutin</li> </ul>
+                <li><strong>Penyebab utama</strong> kebutaan pada orang dewasa usia produktif</li> <li><strong>Kondisi progresif</strong> yang memburuk seiring waktu tanpa perawatan</li> <li><strong>Seringkali tanpa gejala</strong> pada tahap awal</li> <li><strong>Dapat dicegah</strong> dengan pengelolaan diabetes yang tepat dan skrining rutin</li> </ul><h4>⚠️ Faktor Risiko:</h4> <ul>
+                <li>Kontrol gula darah yang buruk</li> <li>Tekanan darah tinggi</li> <li>Kolesterol tinggi</li> <li>Durasi diabetes</li> <li>Kehamilan</li> <li>Merokok</li> </ul>
         </div>
         """, unsafe_allow_html=True) # <<< PASTIKAN INI ADA
     
