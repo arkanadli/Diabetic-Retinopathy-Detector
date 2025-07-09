@@ -680,7 +680,6 @@ def main():
     
     # Main content area
     # Mengubah tata letak kolom agar col1 mengambil seluruh lebar halaman.
-    # col2 sekarang tidak diperlukan karena bagian "Tingkat Keparahan" dihapus.
     col1 = st.columns([1])[0] 
     
     with col1:
@@ -706,9 +705,12 @@ def main():
                 else:  # Grayscale
                     img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
                 
-                # Display original image
                 st.markdown("### 🖼️ Gambar Asli") # Translated
-                st.image(img_array, caption="Gambar fundus yang diunggah", use_column_width=True) # Translated
+                
+                # Tampilkan gambar di dalam sub-kolom agar hanya mengambil setengah lebar
+                img_col, _ = st.columns([0.5, 0.5]) # Membuat dua sub-kolom, yang pertama 50%, yang kedua 50% kosong
+                with img_col:
+                    st.image(img_array, caption="Gambar fundus yang diunggah", use_container_width=True) # Translated
                 
                 # Preprocessing
                 processed_img = preprocess_image_for_prediction(img_array, sigmaX=10)
@@ -776,17 +778,13 @@ def main():
             except Exception as e:
                 st.error(f"❌ Error saat memproses gambar: {str(e)}") # Translated
     
-    # Hapus bagian "Tingkat Keparahan" di sini.
-    # Blok 'with col2:' dan semua isinya sudah dihapus.
-    
-    # Hapus bagian "Additional information sections" (tab)
+    # Menghilangkan bagian "Additional information sections" (tab)
     # st.markdown("---") # Baris ini juga bisa dihapus jika tidak ada konten di bawahnya
-    # tab1, tab2, tab3, tab4 = st.tabs(["📚 Tentang DR", "🔬 Cara Kerja", "📊 Statistik", "❓ FAQ"])
+    # tab1, tab2, tab3, tab4 = st.tabs(...)
     # with tab1: ...
-    # with tab2: ...
-    # with tab3: ...
-    # with tab4: ...
-    # Blok-blok ini semua telah dihapus.
+    # ...
+    # Semua blok kode untuk tab telah dihapus di versi sebelumnya,
+    # jadi pastikan tidak ada kode terkait tab di sini.
 
     # Footer
     st.markdown("---") # Jika ingin tetap ada garis pemisah sebelum footer, biarkan ini
