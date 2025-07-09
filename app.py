@@ -679,7 +679,9 @@ def main():
         return
     
     # Main content area
-    col1, col2 = st.columns([2, 1])
+    # Mengubah tata letak kolom agar col1 mengambil seluruh lebar halaman.
+    # col2 sekarang tidak diperlukan karena bagian "Tingkat Keparahan" dihapus.
+    col1 = st.columns([1])[0] 
     
     with col1:
         st.markdown("## 📁 Unggah Gambar Fundus") # Translated
@@ -774,96 +776,21 @@ def main():
             except Exception as e:
                 st.error(f"❌ Error saat memproses gambar: {str(e)}") # Translated
     
-    with col2:
-        st.markdown("## 🎯 Tingkat Keparahan") # Translated
-        
-        # Display severity level information
-        for i in range(5):
-            severity_info = get_severity_info(i)
-            st.markdown(f"""
             <div class="info-card" style="border-left: 4px solid {severity_info['color']};">
-                <h4 style="color: {severity_info['color']};">{severity_info['icon']} {severity_info['name']}</h4>
-                <p style="font-size: 0.9rem;">{severity_info['description']}</p>
-                <p style="font-size: 0.8rem; color: #888;"><strong>Urgensi:</strong> {severity_info['urgency']}</p>
-            </div>
-            """, unsafe_allow_html=True)
+    # Hapus bagian "Tingkat Keparahan" di sini.
+    # Blok 'with col2:' dan semua isinya sudah dihapus.
     
-    # Additional information sections
-    st.markdown("---")
-    
-    # Create tabs for additional information
-    tab1, tab2, tab3, tab4 = st.tabs(["📚 Tentang DR", "🔬 Cara Kerja", "📊 Statistik", "❓ FAQ"]) # Translated
-    
-    with tab1:
-        st.markdown("""
-        <div class="info-card">
-            <h3>🔬 Memahami Retinopati Diabetik</h3> <p>Retinopati diabetik adalah kondisi mata serius yang dapat berkembang pada penderita diabetes. Ini terjadi ketika kadar gula darah tinggi merusak pembuluh darah di retina, jaringan peka cahaya di bagian belakang mata.</p> <h4>🎯 Fakta Kunci:</h4> <ul>
-                <li><strong>Penyebab utama</strong> kebutaan pada orang dewasa usia produktif</li> <li><strong>Kondisi progresif</strong> yang memburuk seiring waktu tanpa perawatan</li> <li><strong>Seringkali tanpa gejala</strong> pada tahap awal</li> <li><strong>Dapat dicegah</strong> dengan pengelolaan diabetes yang tepat dan skrining rutin</li> </ul><h4>⚠️ Faktor Risiko:</h4> <ul>
-                <li>Kontrol gula darah yang buruk</li> <li>Tekanan darah tinggi</li> <li>Kolesterol tinggi</li> <li>Durasi diabetes</li> <li>Kehamilan</li> <li>Merokok</li> </ul>
-        </div>
-        """, unsafe_allow_html=True) # <<< PASTIKAN INI ADA
-    
-    with tab2:
-        st.markdown("""
-        <div class="info-card">
-            <h3>🤖 Sistem Deteksi AI</h3> <p>Sistem AI kami menggunakan teknik deep learning canggih untuk menganalisis gambar fundus dan mendeteksi retinopati diabetik dengan akurasi tinggi.</p> <h4>🔄 Alur Pemrosesan:</h4> <ol>
-                <li><strong>Pra-pemrosesan Gambar:</strong> Pemotongan, pengubahan ukuran, dan peningkatan gambar</li> <li><strong>Ekstraksi Fitur:</strong> Jaringan saraf konvolusional EfficientNetB0</li>
-                <li><strong>Klasifikasi:</strong> Prediksi 5 kelas keparahan</li> <li><strong>Penilaian Keyakinan:</strong> Penilaian probabilitas untuk setiap kelas</li> </ol>
-            
-            <h4>🎯 Performa Model:</h4> <div class="stat-container">
-                <div class="stat-card">
-                    <div class="stat-value">95%</div>
-                    <div class="stat-label">Akurasi</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">0.94</div>
-                    <div class="stat-label">F1-Score</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">0.96</div>
-                    <div class="stat-label">AUC-ROC</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True) # <<< PASTIKAN INI ADA
-    
-    with tab3:
-        st.markdown("""
-        <div class="info-card">
-            <h3>📊 Statistik Dampak Global</h3> <div class="stat-container">
-                <div class="stat-card">
-                    <div class="stat-value">537M</div>
-                    <div class="stat-label">Orang dewasa dengan diabetes (2021)</div> </div>
-                <div class="stat-card">
-                    <div class="stat-value">93M</div>
-                    <div class="stat-label">Orang dengan retinopati diabetik</div> </div>
-                <div class="stat-card">
-                    <div class="stat-value">28M</div>
-                    <div class="stat-label">Kasus DR yang mengancam penglihatan</div> </div>
-                <div class="stat-card">
-                    <div class="stat-value">4.8M</div>
-                    <div class="stat-label">Kasus kebutaan akibat DR</div> </div>
-            </div>
-            
-            <h4>🌍 Distribusi Regional:</h4> <ul>
-                <li><strong>Asia-Pasifik:</strong> Prevalensi tertinggi (60% dari kasus global)</li> <li><strong>Eropa:</strong> 25% dari kasus global</li> <li><strong>Amerika Utara:</strong> 10% dari kasus global</li> <li><strong>Wilayah lain:</strong> 5% dari kasus global</li> </ul>
-            
-            <h4>📈 Manfaat Skrining:</h4> <ul>
-                <li><strong>Deteksi dini</strong> dapat mencegah 95% kehilangan penglihatan yang parah</li> <li><strong>Skrining rutin</strong> mengurangi risiko kebutaan sebesar 60%</li> <li><strong>Skrining berbantuan AI</strong> meningkatkan aksesibilitas dan akurasi</li> </ul>
-        </div>
-        """, unsafe_allow_html=True) # <<< PASTIKAN INI ADA
-    
-    with tab4:
-        st.markdown("""
-        <div class="info-card">
-            <h3>❓ Pertanyaan yang Sering Diajukan</h3> <h4>🔍 Seberapa akurat sistem AI ini?</h4> <p>Sistem AI kami mencapai akurasi 95% dalam mendeteksi tingkat keparahan retinopati diabetik. Namun, ini harus digunakan sebagai alat skrining dan tidak menggantikan diagnosis medis profesional.</p> <h4>📸 Jenis gambar apa yang paling baik?</h4> <p>Gambar fundus berkualitas tinggi dengan visibilitas yang jelas dari diskus optik dan makula adalah yang terbaik. Gambar harus terang, fokus, dan terpusat dengan baik.</p> <h4>⏱️ Berapa lama waktu analisis?</h4> <p>Analisis AI biasanya membutuhkan waktu 5-10 detik, tergantung pada ukuran gambar dan performa sistem.</p> <h4>🔒 Apakah data saya aman?</h4> <p>Ya, gambar yang diunggah diproses secara lokal dan tidak disimpan secara permanen. Privasi dan keamanan data Anda adalah prioritas utama kami.</p> <h4>🏥 Kapan saya harus menemui dokter?</h4> <p>Anda harus berkonsultasi dengan profesional perawatan mata jika:</p> <ul>
-                <li>AI mendeteksi tingkat retinopati diabetik apa pun</li> <li>Anda mengalami perubahan penglihatan</li> <li>Anda menderita diabetes dan belum pernah memeriksakan mata dalam setahun terakhir</li> <li>Anda memiliki pertanyaan tentang kesehatan mata Anda</li> </ul>
-            
-            <h4>💊 Bisakah retinopati diabetik diobati?</h4> <p>Ya, retinopati diabetik tahap awal dapat dikelola dengan kontrol gula darah yang tepat. Tahap lanjut mungkin memerlukan terapi laser, suntikan, atau operasi.</p> </div>
-        """, unsafe_allow_html=True) # <<< PASTIKAN INI ADA
-    
+    # Hapus bagian "Additional information sections" (tab)
+    # st.markdown("---") # Baris ini juga bisa dihapus jika tidak ada konten di bawahnya
+    # tab1, tab2, tab3, tab4 = st.tabs(["📚 Tentang DR", "🔬 Cara Kerja", "📊 Statistik", "❓ FAQ"])
+    # with tab1: ...
+    # with tab2: ...
+    # with tab3: ...
+    # with tab4: ...
+    # Blok-blok ini semua telah dihapus.
+
     # Footer
-    st.markdown("---")
+    st.markdown("---") # Jika ingin tetap ada garis pemisah sebelum footer, biarkan ini
     st.markdown("""
     <div class="footer">
         <h4>⚠️ Pernyataan Medis Penting</h4> <p>Sistem AI ini dirancang sebagai alat skrining dan edukasi. Ini tidak dimaksudkan untuk mendiagnosis, mengobati, menyembuhkan, atau mencegah penyakit apa pun. Hasilnya tidak boleh menggantikan nasihat, diagnosis, atau perawatan medis profesional.</p> <p><strong>Selalu konsultasikan dengan profesional perawatan kesehatan yang berkualifikasi untuk nasihat medis dan keputusan perawatan.</strong></p> <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
