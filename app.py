@@ -1,4 +1,3 @@
-
 import streamlit as st
 import cv2
 import numpy as np
@@ -804,7 +803,7 @@ def main():
             <h4>⚠️ Faktor Risiko:</h4> <ul>
                 <li>Kontrol gula darah yang buruk</li> <li>Tekanan darah tinggi</li> <li>Kolesterol tinggi</li> <li>Durasi diabetes</li> <li>Kehamilan</li> <li>Merokok</li> </ul>
         </div>
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True) # <<< PASTIKAN INI ADA
     
     with tab2:
         st.markdown("""
@@ -813,7 +812,7 @@ def main():
                 <li><strong>Pra-pemrosesan Gambar:</strong> Pemotongan, pengubahan ukuran, dan peningkatan gambar</li> <li><strong>Ekstraksi Fitur:</strong> Jaringan saraf konvolusional EfficientNetB0</li>
                 <li><strong>Klasifikasi:</strong> Prediksi 5 kelas keparahan</li> <li><strong>Penilaian Keyakinan:</strong> Penilaian probabilitas untuk setiap kelas</li> </ol>
             
-            <h3>🎯 Performa Model:</h3> <div class="stat-container">
+            <h4>🎯 Performa Model:</h4> <div class="stat-container">
                 <div class="stat-card">
                     <div class="stat-value">95%</div>
                     <div class="stat-label">Akurasi</div>
@@ -828,7 +827,7 @@ def main():
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True) # <<< PASTIKAN INI ADA
     
     with tab3:
         st.markdown("""
@@ -854,7 +853,7 @@ def main():
             <h4>📈 Manfaat Skrining:</h4> <ul>
                 <li><strong>Deteksi dini</strong> dapat mencegah 95% kehilangan penglihatan yang parah</li> <li><strong>Skrining rutin</strong> mengurangi risiko kebutaan sebesar 60%</li> <li><strong>Skrining berbantuan AI</strong> meningkatkan aksesibilitas dan akurasi</li> </ul>
         </div>
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True) # <<< PASTIKAN INI ADA
     
     with tab4:
         st.markdown("""
@@ -863,7 +862,7 @@ def main():
                 <li>AI mendeteksi tingkat retinopati diabetik apa pun</li> <li>Anda mengalami perubahan penglihatan</li> <li>Anda menderita diabetes dan belum pernah memeriksakan mata dalam setahun terakhir</li> <li>Anda memiliki pertanyaan tentang kesehatan mata Anda</li> </ul>
             
             <h4>💊 Bisakah retinopati diabetik diobati?</h4> <p>Ya, retinopati diabetik tahap awal dapat dikelola dengan kontrol gula darah yang tepat. Tahap lanjut mungkin memerlukan terapi laser, suntikan, atau operasi.</p> </div>
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True) # <<< PASTIKAN INI ADA
     
     # Footer
     st.markdown("---")
