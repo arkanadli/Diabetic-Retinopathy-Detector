@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 import os
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
 
 # Define your custom metrics if they are not built-in Keras metrics
 class F1Score(tf.keras.metrics.Metric):
@@ -49,7 +52,6 @@ def patch_input_layer():
             return super().from_config(config)
             
     tf.keras.utils.get_custom_objects()['InputLayer'] = PatchedInputLayer
-    print("InputLayer has been patched for batch_shape compatibility.")
 
 # --- Dummy DTypePolicy for compatibility ---
 class DummyDTypePolicy:
@@ -77,67 +79,338 @@ class DummyDTypePolicy:
 # Call the patch functions at the beginning of your script, before load_model
 patch_input_layer()
 
-# Konstanta
+# Constants
 IMG_SIZE = 224
 
-# Konfigurasi halaman
+# Page configuration
 st.set_page_config(
-    page_title="Deteksi Retinopati Diabetik",
+    page_title="AI Diabetic Retinopathy Detection",
     page_icon="👁️",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- Custom CSS for dark theme adjustments ---
+# Enhanced CSS for modern, responsive design
 st.markdown("""
 <style>
-/* Adjust spinner color */
-.stSpinner > div > div {
-    border-top-color: #667eea; /* A color from your header gradient */
-}
-
-/* Adjust text color in warnings/errors for better visibility on dark background */
-.stAlert > div {
-    color: #fff; /* White text for alerts */
-}
-
-/* General text color for Streamlit's default elements if not explicitly set */
-body {
-    color: #f0f2f6; /* Lighter text for overall readability */
-}
-
-/* Adjust the styling of the file uploader for dark theme */
-.stFileUploader > label {
-    color: #f0f2f6 !important;
-}
-.stFileUploader div[data-testid="stFileUploaderDropzone"] {
-    background-color: #262730; /* Darker background for dropzone */
-    border-color: #667eea; /* Border color matching theme */
-    color: #f0f2f6;
-}
-.stFileUploader div[data-testid="stFileUploaderFileName"] {
-    color: #f0f2f6;
-}
-
-/* Make dataframe background fit dark theme */
-.stDataFrame {
-    background-color: #262730; /* Dark background for dataframes */
-    color: #f0f2f6; /* Light text for dataframes */
-}
-.stDataFrame thead tr th {
-    background-color: #31333F; /* Darker header for dataframes */
-    color: #f0f2f6;
-}
-.stDataFrame tbody tr td {
-    color: #f0f2f6;
-}
-
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Root variables for theming */
+    :root {
+        --primary-color: #667eea;
+        --secondary-color: #764ba2;
+        --accent-color: #f093fb;
+        --success-color: #00d4aa;
+        --warning-color: #ffc107;
+        --danger-color: #ff6b6b;
+        --info-color: #74b9ff;
+        --dark-bg: #0e1117;
+        --card-bg: #1a1d29;
+        --text-primary: #ffffff;
+        --text-secondary: #b8bcc8;
+        --border-color: #262730;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --border-radius: 12px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Global styles */
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    .main > div {
+        padding-top: 2rem;
+    }
+    
+    /* Header styling */
+    .hero-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--accent-color) 100%);
+        padding: 3rem 2rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="white" opacity="0.1"/><circle cx="20" cy="20" r="1" fill="white" opacity="0.1"/><circle cx="80" cy="30" r="1.5" fill="white" opacity="0.1"/></svg>');
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: rgba(255,255,255,0.9);
+        margin-bottom: 0;
+        font-weight: 400;
+    }
+    
+    /* Card components */
+    .info-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+    }
+    
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .result-card {
+        background: linear-gradient(135deg, var(--card-bg) 0%, rgba(102, 126, 234, 0.1) 100%);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin: 1rem 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .result-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .severity-badge {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .confidence-score {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+    }
+    
+    .recommendation-card {
+        background: linear-gradient(135deg, var(--info-color) 0%, rgba(116, 185, 255, 0.1) 100%);
+        border: 1px solid var(--info-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 4px solid var(--info-color);
+    }
+    
+    /* Statistics cards */
+    .stat-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+        transition: var(--transition);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    /* Upload area styling */
+    .upload-area {
+        background: var(--card-bg);
+        border: 2px dashed var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        text-align: center;
+        transition: var(--transition);
+        margin: 1rem 0;
+    }
+    
+    .upload-area:hover {
+        border-color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        border-radius: var(--border-radius);
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        transition: var(--transition);
+        box-shadow: var(--shadow);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    /* Sidebar styling */
+    .sidebar .sidebar-content {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Progress bar */
+    .progress-container {
+        background: var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+    
+    .progress-bar {
+        height: 8px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        border-radius: 10px;
+        transition: var(--transition);
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1rem;
+        }
+        
+        .hero-header {
+            padding: 2rem 1rem;
+        }
+        
+        .info-card, .result-card {
+            padding: 1rem;
+        }
+        
+        .stat-container {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+    }
+    
+    /* File uploader styling */
+    .stFileUploader > label {
+        color: var(--text-primary) !important;
+        font-weight: 600;
+    }
+    
+    .stFileUploader div[data-testid="stFileUploaderDropzone"] {
+        background: var(--card-bg);
+        border: 2px dashed var(--border-color);
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+    }
+    
+    .stFileUploader div[data-testid="stFileUploaderDropzone"]:hover {
+        border-color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    /* Spinner customization */
+    .stSpinner > div > div {
+        border-top-color: var(--primary-color);
+    }
+    
+    /* Dataframe styling */
+    .stDataFrame {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+    
+    /* Alert styling */
+    .stAlert {
+        border-radius: var(--border-radius);
+        border: none;
+        box-shadow: var(--shadow);
+    }
+    
+    /* Custom animations */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .pulse-animation {
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    /* Footer */
+    .footer {
+        background: var(--card-bg);
+        border-top: 1px solid var(--border-color);
+        padding: 2rem;
+        margin-top: 3rem;
+        text-align: center;
+        border-radius: var(--border-radius);
+    }
+    
+    /* Icon styling */
+    .icon {
+        font-size: 1.5rem;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-
 # --- Preprocessing functions ---
-
 def crop_all_sides(img, tol=7):
     """Crop all sides (top, bottom, left, right) of the image to remove black borders"""
     if img.ndim == 3:
@@ -146,7 +419,6 @@ def crop_all_sides(img, tol=7):
         gray = img.copy()
 
     mask = gray > tol
-
     rows = np.where(mask.any(axis=1))[0]
     cols = np.where(mask.any(axis=0))[0]
 
@@ -189,30 +461,19 @@ def apply_black_background(img, mask):
     result = np.where(mask_3ch == 255, img, black_bg)
     return result
 
-# Combined preprocessing function, no longer returning steps
 def preprocess_image_for_prediction(img_array, sigmaX=10):
     """Apply all preprocessing steps to an image array."""
     img = img_array.copy()
-    img = resize_img(img, size=IMG_SIZE) # Initial resize is actually done here before other steps
-
-    # Crop to remove black borders
+    img = resize_img(img, size=IMG_SIZE)
     img = crop_all_sides(img)
-    
-    # Create retina mask and apply black background
     retina_mask = create_retina_mask(img)
-    img = apply_black_background(img, retina_mask) # Apply black background based on mask
-
-    # Ben Graham Enhancement (Gaussian Blur and addWeighted)
+    img = apply_black_background(img, retina_mask)
     blurred = cv2.GaussianBlur(img, (0, 0), sigmaX)
     img = cv2.addWeighted(img, 4.0, blurred, -4.0, 128)
-
-    # Resize and pad to square
-    img = resize_img(img, size=IMG_SIZE) # Resize again after enhancement
+    img = resize_img(img, size=IMG_SIZE)
     img = pad_to_square(img)
-    img = resize_img(img, size=IMG_SIZE) # Final resize to IMG_SIZE
-
+    img = resize_img(img, size=IMG_SIZE)
     return img
-
 
 @st.cache_resource
 def load_trained_model():
@@ -220,8 +481,6 @@ def load_trained_model():
     model_path = 'BestModel.h5'
     
     if not os.path.exists(model_path):
-        st.error(f"❌ File model '{model_path}' tidak ditemukan!")
-        st.info("📝 Pastikan file 'BestModel.h5' ada di direktori yang sama dengan aplikasi ini.")
         return None
     
     try:
@@ -234,13 +493,11 @@ def load_trained_model():
             'DTypePolicy': DummyDTypePolicy 
         }
 
-        with st.spinner("Loading model..."):
+        with st.spinner("🤖 Loading AI model..."):
             model = load_model(model_path, custom_objects=custom_objects, compile=False)
-        # st.success(f"✅ Model berhasil dimuat dari '{model_path}'")
         return model
     except Exception as e:
         st.error(f"❌ Error loading model: {str(e)}")
-        st.exception(e)
         return None
 
 def predict_retinopathy(model, processed_img):
@@ -254,58 +511,174 @@ def get_severity_info(class_idx):
     """Get information about each severity level"""
     severity_info = {
         0: {
-            "name": "No DR (Tidak Ada Retinopati Diabetik)",
-            "description": "Tidak ada tanda-tanda retinopati diabetik yang terdeteksi.",
-            "color": "#28a745",
-            "recommendation": "Tetap jaga kontrol gula darah dan lakukan pemeriksaan rutin."
+            "name": "No DR",
+            "full_name": "No Diabetic Retinopathy",
+            "description": "No signs of diabetic retinopathy detected. The retina appears healthy.",
+            "color": "#00d4aa",
+            "recommendation": "Maintain good blood sugar control and continue regular eye checkups.",
+            "urgency": "Low",
+            "icon": "✅"
         },
         1: {
-            "name": "Mild DR (Retinopati Diabetik Ringan)",
-            "description": "Terdapat mikroaneurisma pada retina.",
+            "name": "Mild DR",
+            "full_name": "Mild Diabetic Retinopathy",
+            "description": "Microaneurysms are present in the retina. Early stage of diabetic retinopathy.",
             "color": "#ffc107",
-            "recommendation": "Konsultasi dengan dokter mata dan jaga kontrol gula darah lebih ketat."
+            "recommendation": "Consult with an eye doctor and maintain stricter blood sugar control.",
+            "urgency": "Medium",
+            "icon": "⚠️"
         },
         2: {
-            "name": "Moderate DR (Retinopati Diabetik Sedang)",
-            "description": "Terdapat mikroaneurisma, perdarahan, dan eksudasi.",
+            "name": "Moderate DR",
+            "full_name": "Moderate Diabetic Retinopathy",
+            "description": "Microaneurysms, hemorrhages, and hard exudates are present.",
             "color": "#fd7e14",
-            "recommendation": "Segera konsultasi dengan dokter mata spesialis retina."
+            "recommendation": "Consult with a retinal specialist promptly for further evaluation.",
+            "urgency": "Medium-High",
+            "icon": "🔶"
         },
         3: {
-            "name": "Severe DR (Retinopati Diabetik Berat)",
-            "description": "Terdapat banyak perdarahan retina dan cotton wool spots.",
+            "name": "Severe DR",
+            "full_name": "Severe Diabetic Retinopathy",
+            "description": "Extensive retinal hemorrhages and cotton wool spots are present.",
             "color": "#dc3545",
-            "recommendation": "Segera konsultasi dengan dokter mata spesialis retina untuk penanganan intensif."
+            "recommendation": "URGENT: Consult with a retinal specialist immediately for intensive treatment.",
+            "urgency": "High",
+            "icon": "🚨"
         },
         4: {
-            "name": "Proliferative DR (Retinopati Diabetik Proliferatif)",
-            "description": "Terdapat neovaskularisasi dan risiko tinggi kehilangan penglihatan.",
+            "name": "Proliferative DR",
+            "full_name": "Proliferative Diabetic Retinopathy",
+            "description": "Neovascularization is present with high risk of vision loss.",
             "color": "#6f42c1",
-            "recommendation": "SEGERA konsultasi dengan dokter mata spesialis retina. Mungkin diperlukan terapi laser atau pembedahan."
+            "recommendation": "EMERGENCY: Immediate consultation with retinal specialist. Laser therapy or surgery may be required.",
+            "urgency": "Critical",
+            "icon": "🆘"
         }
     }
     return severity_info.get(class_idx, severity_info[0])
 
-def main():
-    # Header
+def create_probability_chart(predictions, class_names, predicted_class):
+    """Create an interactive probability chart using Plotly"""
+    colors = ['#444444'] * len(predictions)
+    severity_info = get_severity_info(predicted_class)
+    colors[predicted_class] = severity_info['color']
+    
+    fig = go.Figure(data=[
+        go.Bar(
+            x=class_names,
+            y=predictions,
+            marker_color=colors,
+            text=[f'{p:.1%}' for p in predictions],
+            textposition='auto',
+            hovertemplate='<b>%{x}</b><br>Probability: %{y:.1%}<extra></extra>'
+        )
+    ])
+    
+    fig.update_layout(
+        title="Prediction Probability Distribution",
+        xaxis_title="Severity Level",
+        yaxis_title="Probability",
+        template="plotly_dark",
+        showlegend=False,
+        height=400,
+        font=dict(family="Inter", size=12),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+    )
+    
+    return fig
+
+def display_info_section():
+    """Display information about diabetic retinopathy"""
     st.markdown("""
-    <div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); padding: 3rem; border-radius: 10px; margin-bottom: 2rem;">
-        <h2 style="color: white; text-align: center; margin-bottom: 0.5rem;">👁️ Sistem Deteksi Retinopati Diabetik</h2>
-        <p style="color: white; text-align: center; opacity: 0.9;"></p>
+    <div class="info-card">
+        <h3>🔬 About Diabetic Retinopathy</h3>
+        <p>Diabetic retinopathy is a diabetes complication that affects the eyes. It's caused by damage to the blood vessels of the light-sensitive tissue at the back of the eye (retina).</p>
+        
+        <div class="stat-container">
+            <div class="stat-card">
+                <div class="stat-value">285M</div>
+                <div class="stat-label">People with diabetes worldwide</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">93M</div>
+                <div class="stat-label">People with diabetic retinopathy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">AI</div>
+                <div class="stat-label">Powered detection system</div>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
+
+def display_sidebar():
+    """Display sidebar with information and tips"""
+    with st.sidebar:
+        st.markdown("## 📊 Model Information")
+        st.markdown("""
+        <div class="sidebar-content">
+            <h4>🤖 AI Model Details</h4>
+            <ul>
+                <li><strong>Architecture:</strong> EfficientNetB0</li>
+                <li><strong>Input Size:</strong> 224x224 pixels</li>
+                <li><strong>Classes:</strong> 5 severity levels</li>
+                <li><strong>Training:</strong> Medical grade dataset</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("## 💡 Tips for Better Results")
+        st.markdown("""
+        <div class="sidebar-content">
+            <h4>📸 Image Guidelines</h4>
+            <ul>
+                <li>Use high-quality fundus images</li>
+                <li>Ensure proper lighting and focus</li>
+                <li>Avoid blurry or low-resolution images</li>
+                <li>Center the optic disc and macula</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("## ⚠️ Important Notice")
+        st.markdown("""
+        <div class="sidebar-content">
+            <p><strong>Medical Disclaimer:</strong> This AI system is designed as a screening tool and should not replace professional medical diagnosis. Always consult with qualified healthcare professionals for medical advice.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+def main():
+    # Display sidebar
+    display_sidebar()
+    
+    # Hero header
+    st.markdown("""
+    <div class="hero-header">
+        <h1 class="hero-title">🔬 AI-Powered Diabetic Retinopathy Detection</h1>
+        <p class="hero-subtitle">Advanced machine learning system for early detection and classification of diabetic retinopathy severity</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Information section
+    display_info_section()
     
     # Load model
     model = load_trained_model()
     
     if model is None:
-        st.warning("⚠️ Model tidak dapat dimuat. Upload file model atau periksa path file.")
+        st.markdown("""
+        <div class="info-card">
+            <h3>⚠️ Model Not Found</h3>
+            <p>The AI model file 'BestModel.h5' was not found. Please upload the model file to continue.</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.subheader("📤 Upload Model File")
         uploaded_model = st.file_uploader(
-            "Upload file BestModel.h5", 
+            "📤 Upload Model File (BestModel.h5)", 
             type=['h5'], 
-            help="Upload file model yang sudah dilatih"
+            help="Upload the trained model file"
         )
         
         if uploaded_model is not None:
@@ -316,143 +689,85 @@ def main():
                 
                 model = load_trained_model()
                 if model is not None:
-                    if os.path.exists(temp_model_path):
-                        os.remove(temp_model_path)
-                    st.experimental_rerun()
+                    st.success("✅ Model loaded successfully!")
+                    st.rerun()
             except Exception as e:
-                st.error(f"Error saving or reloading model: {str(e)}")
-                st.exception(e)
-            
+                st.error(f"❌ Error loading model: {str(e)}")
         return
     
-    # File uploader
-    uploaded_file = st.file_uploader(
-        "📁 Upload Gambar Fundus Retina",
-        type=['png', 'jpg', 'jpeg'],
-        help="Upload gambar fundus retina untuk dianalisis"
-    )
+    # Main content area
+    col1, col2 = st.columns([2, 1])
     
-    if uploaded_file is not None:
-        try:
-            # Load dan konversi gambar
-            pil_image = Image.open(uploaded_file)
-            img_array = np.array(pil_image)
-            
-            # Konversi ke RGB jika perlu
-            if len(img_array.shape) == 3 and img_array.shape[2] == 4:  # RGBA
-                img_array = cv2.cvtColor(img_array, cv2.COLOR_RGBA2RGB)
-            elif len(img_array.shape) == 3 and img_array.shape[2] == 3:  # Already RGB
-                pass
-            else:  # Grayscale
-                img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
-            
-            # Display only the original image
-            st.subheader("🖼️ Gambar Original")
-            st.image(img_array, caption="Gambar yang diupload", use_container_width=True) # Set a fixed width
-            
-            # Preprocessing (happens internally without display)
-            processed_img = preprocess_image_for_prediction(img_array, sigmaX=10) 
-            
-            # Prediction button
-            if st.button("🔍 Analisis Retinopati Diabetik", type="secondary", use_container_width=True):
-                with st.spinner("Sedang menganalisis gambar..."):
-                    try:
-                        predictions = predict_retinopathy(model, processed_img)
-                        predicted_class = np.argmax(predictions)
-                        confidence = predictions[predicted_class]
-                        
-                        # Informasi hasil prediksi
-                        severity_info = get_severity_info(predicted_class)
-                        
-                        # Tampilkan hasil
-                        st.markdown("---")
-                        st.subheader("📋 Hasil Analisis")
-                        
-                        # Card hasil utama
-                        st.markdown(f"""
-                        <div style="background-color: {severity_info['color']}; padding: 1.5rem; border-radius: 10px; margin: 1rem 0;">
-                            <h3 style="color: white; margin-bottom: 0.5rem;">{severity_info['name']}</h3>
-                            <p style="color: white; margin-bottom: 0.5rem; opacity: 0.9;">{severity_info['description']}</p>
-                            <p style="color: white; font-weight: bold;">Confidence: {confidence:.1%}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Rekomendasi
-                        st.markdown(f"""
-                        <div style="background-color: rgb(40, 42, 54); padding: 1rem; border-left: 4px solid {severity_info['color']}; margin: 1rem 0;">
-                            <h4>💡 Rekomendasi:</h4>
-                            <p style="color: white;">{severity_info['recommendation']}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Grafik probabilitas
-                        st.subheader("📊 Distribusi Probabilitas")
-                        
-                        class_names = [
-                            "No DR",
-                            "Mild DR", 
-                            "Moderate DR",
-                            "Severe DR",
-                            "Proliferative DR"
-                        ]
-                        
-                        # Bar chart
-                        fig, ax = plt.subplots(figsize=(10, 6))
-                        
-                        # Set plot background and text colors for dark theme
-                        fig.patch.set_facecolor('None') # Make figure background transparent
-                        ax.set_facecolor('None') # Make axes background transparent
-                        ax.tick_params(axis='x', colors='white') # X-axis labels
-                        ax.tick_params(axis='y', colors='white') # Y-axis labels
-                        ax.xaxis.label.set_color('white') # X-axis title
-                        ax.yaxis.label.set_color('white') # Y-axis title
-                        ax.title.set_color('white') # Plot title
-                        ax.spines['left'].set_color('white') # Y-axis line
-                        ax.spines['bottom'].set_color('white') # X-axis line
-                        ax.spines['right'].set_color('None') # Remove right spine
-                        ax.spines['top'].set_color('None') # Remove top spine
-                        
-                        bars = ax.bar(class_names, predictions, color='#444444') # Default bar color for dark theme
-                        
-                        # Highlight predicted class
-                        bars[predicted_class].set_color(severity_info['color'])
-                        
-                        ax.set_ylabel('Probabilitas')
-                        ax.set_title('Distribusi Probabilitas Tingkat Keparahan')
-                        ax.set_ylim(0, 1)
-                        
-                        # Add percentage labels on bars, set color to white
-                        for i, (bar, prob) in enumerate(zip(bars, predictions)):
-                            ax.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
-                                    f'{prob:.1%}', ha='center', va='bottom', color='white')
-                        
-                        plt.xticks(rotation=45, ha='right')
-                        plt.tight_layout()
-                        st.pyplot(fig)
-                        
-                        # Detail probabilitas
-                        st.subheader("📈 Detail Probabilitas")
-                        prob_df = {
-                            "Tingkat Keparahan": class_names,
-                            "Probabilitas": [f"{p:.4f}" for p in predictions],
-                            "Persentase": [f"{p:.1%}" for p in predictions]
-                        }
-                        st.dataframe(prob_df, use_container_width=True)
-                        
-                    except Exception as e:
-                        st.error(f"❌ Error saat melakukan prediksi: {str(e)}")
-            
-        except Exception as e:
-            st.error(f"❌ Error saat memproses gambar: {str(e)}")
-    
-    # Footer
-    st.markdown("---")
-    st.markdown("""
-    <div style="text-align: center; color: #666; padding: 1rem;">
-        <p>⚠️ <strong>Disclaimer:</strong> Sistem ini adalah alat bantu diagnosis dan tidak menggantikan konsultasi medis profesional.</p>
-        <p>Selalu konsultasikan hasil dengan dokter mata spesialis.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
+    with col1:
+        st.markdown("## 📁 Upload Fundus Image")
+        
+        uploaded_file = st.file_uploader(
+            "Choose a fundus retina image",
+            type=['png', 'jpg', 'jpeg'],
+            help="Upload a high-quality fundus image for analysis"
+        )
+        
+        if uploaded_file is not None:
+            try:
+                # Load and convert image
+                pil_image = Image.open(uploaded_file)
+                img_array = np.array(pil_image)
+                
+                # Convert to RGB if needed
+                if len(img_array.shape) == 3 and img_array.shape[2] == 4:  # RGBA
+                    img_array = cv2.cvtColor(img_array, cv2.COLOR_RGBA2RGB)
+                elif len(img_array.shape) == 3 and img_array.shape[2] == 3:  # Already RGB
+                    pass
+                else:  # Grayscale
+                    img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
+                
+                # Display original image
+                st.markdown("### 🖼️ Original Image")
+                st.image(img_array, caption="Uploaded fundus image", use_column_width=True)
+                
+                # Preprocessing
+                processed_img = preprocess_image_for_prediction(img_array, sigmaX=10)
+                
+                # Analysis button
+                if st.button("🔍 Analyze Image", type="primary", use_container_width=True):
+                    with st.spinner("🤖 AI is analyzing the image..."):
+                        try:
+                            predictions = predict_retinopathy(model, processed_img)
+                            predicted_class = np.argmax(predictions)
+                            confidence = predictions[predicted_class]
+                            
+                            # Display results
+                            severity_info = get_severity_info(predicted_class)
+                            
+                            st.markdown("---")
+                            st.markdown("## 📋 Analysis Results")
+                            
+                            # Main result card
+                            st.markdown(f"""
+                            <div class="result-card">
+                                <div class="severity-badge" style="background-color: {severity_info['color']}; color: white;">
+                                    {severity_info['icon']} {severity_info['name']}
+                                </div>
+                                <h3 style="color: {severity_info['color']};">{severity_info['full_name']}</h3>
+                                <p>{severity_info['description']}</p>
+                                <div class="confidence-score" style="color: {severity_info['color']};">
+                                    {confidence:.1%} Confidence
+                                </div>
+                                <p><strong>Urgency Level:</strong> {severity_info['urgency']}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            # Recommendation card
+                            st.markdown(f"""
+                            <div class="recommendation-card">
+                                <h4>💡 Medical Recommendation</h4>
+                                <p>{severity_info['recommendation']}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            # Probability chart
+                            st.markdown("### 📊 Detailed Probability Analysis")
+                            
+                            class_names = ["No DR", "Mild DR", "Moderate DR", "Severe DR", "Proliferative DR"]
+                            fig = create_probability_chart(predictions, class_names, predicted_class)
+                            st.plotly_chart(fig, use_container_width=True)
