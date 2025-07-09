@@ -776,7 +776,6 @@ def main():
             except Exception as e:
                 st.error(f"❌ Error saat memproses gambar: {str(e)}") # Translated
     
-            <div class="info-card" style="border-left: 4px solid {severity_info['color']};">
     # Hapus bagian "Tingkat Keparahan" di sini.
     # Blok 'with col2:' dan semua isinya sudah dihapus.
     
