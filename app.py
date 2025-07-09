@@ -87,7 +87,7 @@ st.set_page_config(
     page_title="Deteksi Retinopati Diabetik AI",
     page_icon="👁️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed" # Tetapkan collapsed untuk mobile
 )
 
 # Enhanced CSS for modern, responsive design
@@ -342,6 +342,26 @@ st.markdown("""
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         }
     }
+
+    /* --- CUSTOM CSS FOR SIDEBAR ON DESKTOP --- */
+    /* Target sidebar element for larger screens and ensure it's open */
+    @media (min-width: 769px) { /* Adjust breakpoint as needed */
+        section.main .block-container {
+            padding-left: 23rem; /* Sesuaikan dengan lebar sidebar yang terbuka */
+        }
+        .css-vk326u { /* Ini adalah selector untuk div utama sidebar di Streamlit. Mungkin berubah di versi mendatang! */
+            transform: none !important; /* Memastikan sidebar tidak tergeser keluar */
+            visibility: visible !important;
+            width: 21rem !important; /* Sesuaikan lebar sidebar jika perlu */
+            margin-left: 0 !important;
+            position: fixed; /* Memastikan sidebar tetap di tempatnya saat digulir */
+        }
+        /* Menyembunyikan tombol hamburger di desktop agar tidak redundan */
+        .st-emotion-cache-1na6s5j { /* Selector untuk tombol hamburger. Mungkin berubah! */
+            display: none !important;
+        }
+    }
+    /* --- END CUSTOM CSS FOR SIDEBAR --- */
     
     /* File uploader styling */
     .stFileUploader > label {
@@ -707,9 +727,9 @@ def main():
                 
                 st.markdown("### 🖼️ Gambar Asli") # Translated
                 
-                # Tampilkan gambar di dalam sub-kolom agar hanya mengambil setengah lebar
-                empty_col, img_col, empty_col_right = st.columns([0.25, 0.5, 0.25])
-                with img_col:
+                # Membuat tiga kolom untuk menengahkan gambar
+                empty_col_left, img_display_col, empty_col_right = st.columns([0.25, 0.5, 0.25]) # Kolom kiri 25%, tengah (gambar) 50%, kanan 25%
+                with img_display_col:
                     st.image(img_array, caption="Gambar fundus yang diunggah", use_container_width=True) # Translated
                 
                 # Preprocessing
@@ -778,14 +798,6 @@ def main():
             except Exception as e:
                 st.error(f"❌ Error saat memproses gambar: {str(e)}") # Translated
     
-    # Menghilangkan bagian "Additional information sections" (tab)
-    # st.markdown("---") # Baris ini juga bisa dihapus jika tidak ada konten di bawahnya
-    # tab1, tab2, tab3, tab4 = st.tabs(...)
-    # with tab1: ...
-    # ...
-    # Semua blok kode untuk tab telah dihapus di versi sebelumnya,
-    # jadi pastikan tidak ada kode terkait tab di sini.
-
     # Footer
     st.markdown("---") # Jika ingin tetap ada garis pemisah sebelum footer, biarkan ini
     st.markdown("""
