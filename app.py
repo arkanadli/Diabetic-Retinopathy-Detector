@@ -813,7 +813,7 @@ def main():
                 <li><strong>Pra-pemrosesan Gambar:</strong> Pemotongan, pengubahan ukuran, dan peningkatan gambar</li> <li><strong>Ekstraksi Fitur:</strong> Jaringan saraf konvolusional EfficientNetB0</li>
                 <li><strong>Klasifikasi:</strong> Prediksi 5 kelas keparahan</li> <li><strong>Penilaian Keyakinan:</strong> Penilaian probabilitas untuk setiap kelas</li> </ol>
             
-            <h4>🎯 Performa Model:</h4> <div class="stat-container">
+            <h3>🎯 Performa Model:</h3> <div class="stat-container">
                 <div class="stat-card">
                     <div class="stat-value">95%</div>
                     <div class="stat-label">Akurasi</div>
