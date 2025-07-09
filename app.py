@@ -708,7 +708,7 @@ def main():
                 st.markdown("### 🖼️ Gambar Asli") # Translated
                 
                 # Tampilkan gambar di dalam sub-kolom agar hanya mengambil setengah lebar
-                img_col, _ = st.columns([0.5, 0.5]) # Membuat dua sub-kolom, yang pertama 50%, yang kedua 50% kosong
+                img_col, _ = st.columns([0.25, 0.5, 0.25])
                 with img_col:
                     st.image(img_array, caption="Gambar fundus yang diunggah", use_container_width=True) # Translated
                 
