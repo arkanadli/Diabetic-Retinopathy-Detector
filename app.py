@@ -648,11 +648,11 @@ def display_sidebar():
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("## ⚠️ Pemberitahuan Penting") # Translated
-        st.markdown("""
-        <div class="sidebar-content">
-            <p><strong>Pernyataan Medis:</strong> Sistem AI ini dirancang sebagai alat skrining dan tidak boleh menggantikan diagnosis medis profesional. Selalu konsultasikan dengan profesional perawatan kesehatan yang berkualifikasi untuk nasihat medis.</p> </div>
-        """, unsafe_allow_html=True)
+        # st.markdown("## ⚠️ Pemberitahuan Penting") # Translated
+        # st.markdown("""
+        # <div class="sidebar-content">
+        #     <p><strong>Pernyataan Medis:</strong> Sistem AI ini dirancang sebagai alat skrining dan tidak boleh menggantikan diagnosis medis profesional. Selalu konsultasikan dengan profesional perawatan kesehatan yang berkualifikasi untuk nasihat medis.</p> </div>
+        # """, unsafe_allow_html=True)
 
 def main():
     # Display sidebar
